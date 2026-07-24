@@ -28,6 +28,7 @@ import {
   useGenerateFicha,
   useGenerateParecer,
   useProponent,
+  useUpdateCriterionScore,
   useUpdateProponentTipo,
   useUploadFile,
   useReopenEvaluation,
@@ -42,7 +43,7 @@ import {
   useRunAgentPipeline,
   type EvidenceRow,
 } from "@/lib/queries/agents";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
   Bot,
@@ -74,6 +75,7 @@ function ProponentDetail() {
   const { id } = useParams({ from: "/proponentes/$id" });
   const { data: p, isLoading } = useProponent(id);
   const { data: scores } = useCriterionScores(id);
+  const updateScore = useUpdateCriterionScore(id);
   const approveEvaluation = useApproveEvaluation(id);
   const runAgents = useRunAgentPipeline(id);
   const reopenEvaluation = useReopenEvaluation(id);
@@ -199,13 +201,15 @@ function ProponentDetail() {
           {approveEvaluation.isSuccess && approveEvaluation.data.parecerError && (
             <p className="text-xs text-warning-foreground">
               Avaliação aprovada, mas a minuta de parecer não pôde ser gerada automaticamente (
-              {approveEvaluation.data.parecerError}). Reexecute a geração pelo Agente 8 na aba "Minuta de parecer".
+              {approveEvaluation.data.parecerError}). Reexecute a geração pelo Agente 8 na aba
+              "Minuta de parecer".
             </p>
           )}
 
           {approveEvaluation.isError && (
             <p className="text-xs text-destructive">
-              {(approveEvaluation.error as Error | undefined)?.message ?? "Falha ao aprovar a avaliação."}
+              {(approveEvaluation.error as Error | undefined)?.message ??
+                "Falha ao aprovar a avaliação."}
             </p>
           )}
 
@@ -214,6 +218,8 @@ function ProponentDetail() {
               <CriterionRow
                 key={c.id}
                 data={c}
+                saving={updateScore.isPending}
+                onSave={(patch) => updateScore.mutate({ id: c.id, ...patch })}
               />
             ))}
           </div>
@@ -341,10 +347,32 @@ function ScoreOverview({
 
 function CriterionRow({
   data,
+  onSave,
+  saving,
 }: {
   data: CriterionScoreRow;
+  onSave: (patch: {
+    approved_score: number | null;
+    human_review_required: boolean;
+    justification?: string;
+  }) => void;
+  saving: boolean;
 }) {
-  const pending = data.human_review_required;
+  const [approved, setApproved] = useState<number | "">(data.approved_score ?? "");
+  const [pending, setPending] = useState(data.human_review_required);
+  const [editingText, setEditingText] = useState(false);
+  const [justification, setJustification] = useState(data.justification ?? "");
+
+  useEffect(() => {
+    setApproved(data.approved_score ?? "");
+    setPending(data.human_review_required);
+    setJustification(data.justification ?? "");
+  }, [data.approved_score, data.human_review_required, data.justification]);
+
+  const dirty =
+    approved !== (data.approved_score ?? "") ||
+    pending !== data.human_review_required ||
+    (editingText && justification !== (data.justification ?? ""));
 
   return (
     <Card className="border-border">
@@ -356,20 +384,79 @@ function CriterionRow({
               <div className="font-medium">{CRITERION_LABEL[data.criterion]}</div>
               <div className="text-xs text-muted-foreground">máx. {data.max_score}</div>
             </div>
-            {data.justification && (
-              <p className="text-xs text-muted-foreground mt-1">{data.justification}</p>
+            {editingText ? (
+              <Textarea
+                value={justification}
+                onChange={(e) => setJustification(e.target.value)}
+                className="mt-1 text-xs min-h-[90px]"
+                placeholder="Justificativa do critério…"
+              />
+            ) : (
+              data.justification && (
+                <p className="text-xs text-muted-foreground mt-1">{data.justification}</p>
+              )
             )}
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (editingText) setJustification(data.justification ?? "");
+                  setEditingText((v) => !v);
+                }}
+                className="text-[11px] px-2 py-1 rounded border border-border text-muted-foreground hover:bg-secondary transition-colors"
+              >
+                {editingText ? "cancelar edição do texto" : "editar avaliação"}
+              </button>
+            </div>
             <div className="flex items-center gap-3 mt-3">
               <label className="text-xs text-muted-foreground">Nota dos agentes</label>
               <span className="font-mono text-sm tabular-nums w-12 text-right">
                 {data.proposed_score ?? "—"}
                 <span className="text-[10px] text-muted-foreground">/{data.max_score}</span>
               </span>
-              <label className="text-xs text-muted-foreground ml-4">Nota final</label>
-              <span className="font-mono text-sm tabular-nums w-12 text-right">
-                {data.approved_score ?? "—"}
-                <span className="text-[10px] text-muted-foreground">/{data.max_score}</span>
-              </span>
+              <label className="text-xs text-muted-foreground ml-4">Nota da avaliadora</label>
+              <Input
+                type="number"
+                min={0}
+                max={data.max_score}
+                value={approved}
+                onChange={(e) => {
+                  const value = e.target.value === "" ? "" : Number(e.target.value);
+                  setApproved(value);
+                  // Definir a nota da avaliadora é o ato de revisão humana em
+                  // si — fecha a pendência automaticamente. Ainda dá pra
+                  // reabrir manualmente pelo botão ao lado, se necessário.
+                  if (value !== "") setPending(false);
+                }}
+                className="w-20 h-8 font-mono text-right"
+              />
+              <button
+                type="button"
+                onClick={() => setPending((v) => !v)}
+                className={`text-[11px] px-2 py-1 rounded border transition-colors ${
+                  pending
+                    ? "border-warning/50 bg-warning/15 text-warning-foreground"
+                    : "border-border text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                {pending ? "pendência aberta" : "marcar pendência"}
+              </button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto"
+                disabled={!dirty || saving}
+                onClick={() => {
+                  onSave({
+                    approved_score: approved === "" ? null : approved,
+                    human_review_required: pending,
+                    ...(editingText ? { justification } : {}),
+                  });
+                  setEditingText(false);
+                }}
+              >
+                Salvar
+              </Button>
             </div>
           </div>
           <div className="flex flex-col gap-1.5 items-end">

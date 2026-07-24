@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types";
 import { generateFichaFn } from "@/lib/ficha-actions";
-import { approveEvaluationByAgentsFn, generateParecerFn, reopenEvaluationFn } from "@/lib/agent-actions";
+import {
+  approveEvaluationByAgentsFn,
+  generateParecerFn,
+  reopenEvaluationFn,
+  updateCriterionScoreFn,
+} from "@/lib/agent-actions";
 
 export type TipoProponente = Enums<"tipo_proponente">;
 
@@ -87,6 +92,28 @@ export function useCriterionScores(proponentId: string) {
       return data as CriterionScoreRow[];
     },
     enabled: !!proponentId,
+  });
+}
+
+// Grava a nota que a avaliadora define manualmente por critério — o ato de
+// revisão humana em si. Ver [[feedback-pnab-human-review]]: este caminho não
+// pode ser removido nem contornado.
+export function useUpdateCriterionScore(proponentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      id: string;
+      approved_score: number | null;
+      human_review_required: boolean;
+      justification?: string;
+    }) => {
+      return updateCriterionScoreFn({ data: params });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
+      queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
+      queryClient.invalidateQueries({ queryKey: ["proponents"] });
+    },
   });
 }
 

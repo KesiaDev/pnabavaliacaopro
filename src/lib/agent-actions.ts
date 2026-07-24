@@ -17,9 +17,8 @@ export const startAgentPipelineFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    const { getAuthorizedAdminSupabase, reapStuckRuns } = await import(
-      "@/lib/agent-actions.server"
-    );
+    const { getAuthorizedAdminSupabase, reapStuckRuns } =
+      await import("@/lib/agent-actions.server");
     const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const proponentId = data.proponentId;
 
@@ -166,6 +165,37 @@ export const finishAgentPipelineFn = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// Edição manual de uma nota por critério — é este o ato de revisão humana
+// que a Seção 9 do prompt-mestre exige antes de qualquer nota virar
+// definitiva. Nunca remover esta função nem o campo editável na UI; ver
+// [[feedback-pnab-human-review]] na memória do projeto.
+export const updateCriterionScoreFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    (data: {
+      id: string;
+      approved_score: number | null;
+      human_review_required: boolean;
+      justification?: string;
+    }) => data,
+  )
+  .handler(async ({ context, data }) => {
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
+    const patch: {
+      approved_score: number | null;
+      human_review_required: boolean;
+      justification?: string;
+    } = {
+      approved_score: data.approved_score,
+      human_review_required: data.human_review_required,
+    };
+    if (data.justification !== undefined) patch.justification = data.justification;
+    const { error } = await supabase.from("criterion_scores").update(patch).eq("id", data.id);
+    if (error) throw new Error("Não foi possível salvar a nota da avaliadora.");
+    return { ok: true as const };
+  });
+
 export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
@@ -177,7 +207,7 @@ export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
 
     const { data: scores, error: scoresError } = await supabase
       .from("criterion_scores")
-      .select("id, criterion, proposed_score, human_review_required")
+      .select("id, criterion, proposed_score, approved_score, human_review_required")
       .eq("proponent_id", proponentId)
       .order("criterion", { ascending: true });
     if (scoresError || !scores) throw new Error("Não foi possível carregar as notas dos agentes.");
@@ -202,11 +232,16 @@ export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
       );
     }
 
+    // Só preenche approved_score a partir da proposta da IA quando a
+    // avaliadora ainda não definiu a própria nota naquele critério — nunca
+    // sobrescreve um valor que ela já reviu e salvou manualmente.
     for (const score of scores) {
-      await supabase
-        .from("criterion_scores")
-        .update({ approved_score: score.proposed_score, human_review_required: false })
-        .eq("id", score.id);
+      if (score.approved_score == null) {
+        await supabase
+          .from("criterion_scores")
+          .update({ approved_score: score.proposed_score, human_review_required: false })
+          .eq("id", score.id);
+      }
     }
 
     const { error: evalError } = await supabase
