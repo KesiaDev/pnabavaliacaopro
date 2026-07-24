@@ -32,7 +32,10 @@ const JSON_ONLY_SUFFIX =
 export interface AgentFile {
   name: string;
   mimeType: string;
-  data: Buffer;
+  // Um dos dois precisa estar presente. `signedUrl` é preferido para PDFs
+  // grandes — o gateway busca do Storage sem transitar pela memória do Worker.
+  data?: Buffer;
+  signedUrl?: string;
 }
 
 interface ChatContentBlock {
@@ -62,8 +65,11 @@ export interface CallAgentResult<T> {
 }
 
 function isPdf(file: AgentFile): boolean {
-  return file.mimeType === "application/pdf" || file.data.subarray(0, 5).toString("utf8") === "%PDF-";
+  if (file.mimeType === "application/pdf") return true;
+  if (file.data && file.data.subarray(0, 5).toString("utf8") === "%PDF-") return true;
+  return false;
 }
+
 
 function isImage(file: AgentFile): boolean {
   return file.mimeType.startsWith("image/");
