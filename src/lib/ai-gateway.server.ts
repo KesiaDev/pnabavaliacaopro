@@ -36,9 +36,10 @@ export interface AgentFile {
 }
 
 interface ChatContentBlock {
-  type: "text" | "file";
+  type: "text" | "file" | "image_url";
   text?: string;
   file?: { filename: string; file_data: string };
+  image_url?: { url: string };
 }
 
 interface ChatMessage {
@@ -58,6 +59,27 @@ export interface CallAgentResult<T> {
   data: T;
   raw: string;
   skippedFiles: string[];
+}
+
+function isPdf(file: AgentFile): boolean {
+  return file.mimeType === "application/pdf" || file.data.subarray(0, 5).toString("utf8") === "%PDF-";
+}
+
+function isImage(file: AgentFile): boolean {
+  return file.mimeType.startsWith("image/");
+}
+
+function isTextLike(file: AgentFile): boolean {
+  return (
+    file.mimeType.startsWith("text/") ||
+    file.mimeType === "application/json" ||
+    file.mimeType === "application/xml" ||
+    file.mimeType === "application/csv"
+  );
+}
+
+function decodeTextFile(file: AgentFile): string {
+  return file.data.toString("utf8").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 20_000);
 }
 
 function requireApiKey(): string {
@@ -143,6 +165,7 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
 
   const skippedFiles: string[] = [];
   const fileBlocks: ChatContentBlock[] = [];
+  const textFileBlocks: string[] = [];
   let totalBytes = 0;
   for (const file of params.files ?? []) {
     if (file.data.length > MAX_FILE_BYTES || totalBytes + file.data.length > MAX_TOTAL_BYTES) {
@@ -150,19 +173,38 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
       continue;
     }
     totalBytes += file.data.length;
-    fileBlocks.push({
-      type: "file",
-      file: {
-        filename: file.name,
-        file_data: `data:${file.mimeType};base64,${file.data.toString("base64")}`,
-      },
-    });
+    if (isPdf(file)) {
+      fileBlocks.push({
+        type: "file",
+        file: {
+          filename: file.name,
+          file_data: `data:application/pdf;base64,${file.data.toString("base64")}`,
+        },
+      });
+      continue;
+    }
+    if (isImage(file)) {
+      fileBlocks.push({
+        type: "image_url",
+        image_url: { url: `data:${file.mimeType};base64,${file.data.toString("base64")}` },
+      });
+      continue;
+    }
+    if (isTextLike(file)) {
+      textFileBlocks.push(`Arquivo textual: ${file.name}\n${decodeTextFile(file)}`);
+      continue;
+    }
+    skippedFiles.push(`${file.name} (formato não suportado: ${file.mimeType})`);
   }
 
+  const textAttachmentNote =
+    textFileBlocks.length > 0
+      ? `\n\nConteúdo textual anexado sem file_data:\n\n${textFileBlocks.join("\n\n---\n\n")}`
+      : "";
   const userText =
     skippedFiles.length > 0
-      ? `${params.userPrompt}\n\nAviso: os seguintes arquivos foram ignorados por excederem o tamanho processável e não devem ser interpretados como ausentes de conteúdo: ${skippedFiles.join(", ")}.`
-      : params.userPrompt;
+      ? `${params.userPrompt}${textAttachmentNote}\n\nAviso: os seguintes arquivos foram ignorados por excederem o tamanho processável ou por formato incompatível e não devem ser interpretados como ausentes de conteúdo: ${skippedFiles.join(", ")}.`
+      : `${params.userPrompt}${textAttachmentNote}`;
 
   const messages: ChatMessage[] = [
     { role: "system", content: params.systemPrompt + JSON_ONLY_SUFFIX },
