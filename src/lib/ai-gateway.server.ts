@@ -176,6 +176,18 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
   const textFileBlocks: string[] = [];
   let totalBytes = 0;
   for (const file of params.files ?? []) {
+    // PDF via URL assinada — não pesa nos limites inline, o gateway busca sozinho.
+    if (isPdf(file) && file.signedUrl) {
+      fileBlocks.push({
+        type: "file",
+        file: { filename: file.name, file_data: file.signedUrl },
+      });
+      continue;
+    }
+    if (!file.data || file.data.length === 0) {
+      skippedFiles.push(`${file.name} (conteúdo indisponível para leitura automática)`);
+      continue;
+    }
     if (file.data.length > MAX_FILE_BYTES || totalBytes + file.data.length > MAX_TOTAL_BYTES) {
       skippedFiles.push(file.name);
       continue;
@@ -204,6 +216,7 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
     }
     skippedFiles.push(`${file.name} (formato não suportado: ${file.mimeType})`);
   }
+
 
   const textAttachmentNote =
     textFileBlocks.length > 0
