@@ -5,13 +5,13 @@ import type { z } from "zod";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-5.5";
-const MAX_FILE_BYTES = 15 * 1024 * 1024; // Seção 8: "arquivo ilegível deve ser marcado, não interpretado"
-// Limite do TOTAL combinado por chamada — sem isso, um proponente com muitos
-// arquivos grandes (cada um dentro do limite individual) pode montar um
-// payload grande o bastante para estourar memória/tempo do Worker, o que
-// derruba a função inteira com um erro genérico (sem chegar a lançar um
-// Error nosso, então nem aparece mensagem clara pro usuário).
-const MAX_TOTAL_BYTES = 12 * 1024 * 1024;
+// Limites APENAS para arquivos anexados inline (base64). PDFs são anexados
+// via URL assinada do Storage e não pesam nesses limites — o provedor busca
+// diretamente. Assim portfólios de 40–115MB voltam a ser lidos pelos agentes
+// sem estourar memória do Worker.
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
+
 // Sem timeout próprio, uma resposta lenta do gateway (comum em chamadas que
 // pedem pra IA raciocinar sobre vários critérios de uma vez, com vários PDFs
 // anexados) trava o processo até a infraestrutura matá-lo à força — sem
