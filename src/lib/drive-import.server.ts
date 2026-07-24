@@ -24,6 +24,15 @@ function sha256(buf: Buffer): string {
   return crypto.createHash("sha256").update(buf).digest("hex");
 }
 
+function isPdfBuffer(buf: Buffer): boolean {
+  return buf.subarray(0, 5).toString("utf8") === "%PDF-";
+}
+
+function storedMimeType(file: DriveFile, binary: Buffer): string {
+  if (isGoogleWorkspaceFile(file) || isPdfBuffer(binary)) return "application/pdf";
+  return file.mimeType;
+}
+
 interface ImportStats {
   subpastas: number;
   proponentesNovos: number;
@@ -266,6 +275,7 @@ async function processFile(args: {
     const binary = isGoogleWorkspaceFile(file)
       ? await exportWorkspaceFileAsPdf(accessToken, file.id)
       : await downloadFileBinary(accessToken, file.id);
+    const mimeType = storedMimeType(file, binary);
     const hash = sha256(binary);
     const safeName = sanitizeFileName(file.name);
     const storagePath = `${proponentId}/${file.id}/v1-${safeName}`;
@@ -274,7 +284,7 @@ async function processFile(args: {
       .from("dossies-privados")
       .upload(storagePath, binary, {
         upsert: false,
-        contentType: file.mimeType,
+        contentType: mimeType,
       });
     if (uploadError) {
       stats.avisos.push(`Falha ao subir "${file.name}": ${uploadError.message}`);
@@ -286,7 +296,7 @@ async function processFile(args: {
       .insert({
         proponent_id: proponentId,
         nome: file.name,
-        mime_type: file.mimeType,
+        mime_type: mimeType,
         tipo_documental: "outro",
         storage_path: storagePath,
         drive_file_id: file.id,
@@ -329,6 +339,7 @@ async function processFile(args: {
     const binary = isGoogleWorkspaceFile(file)
       ? await exportWorkspaceFileAsPdf(accessToken, file.id)
       : await downloadFileBinary(accessToken, file.id);
+    const mimeType = storedMimeType(file, binary);
     const hash = sha256(binary);
     const safeName = sanitizeFileName(file.name);
     const maxVersao = Math.max(
@@ -342,7 +353,7 @@ async function processFile(args: {
       .from("dossies-privados")
       .upload(storagePath, binary, {
         upsert: false,
-        contentType: file.mimeType,
+        contentType: mimeType,
       });
     if (uploadError) {
       stats.avisos.push(`Falha ao subir nova versão de "${file.name}": ${uploadError.message}`);
@@ -361,6 +372,7 @@ async function processFile(args: {
       .from("files")
       .update({
         nome: file.name,
+        mime_type: mimeType,
         drive_modified_time: file.modifiedTime,
         drive_checksum: file.md5Checksum ?? null,
         caminho_relativo: caminhoRelativo,
