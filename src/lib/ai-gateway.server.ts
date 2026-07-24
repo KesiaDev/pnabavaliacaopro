@@ -10,10 +10,11 @@ const DEFAULT_MODEL = "openai/gpt-5.5";
 // anterior de mandar PDF por URL assinada quebrava toda chamada com 400
 // "Invalid file data: ... but got a value without the 'data:' prefix"). Os
 // limites abaixo são a segunda camada de defesa contra estourar memória do
-// Worker — a primeira já filtra em shared.server.ts (fetchProponentFiles),
-// então na prática o que chega aqui já está bem abaixo destes valores.
-const MAX_FILE_BYTES = 8 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
+// Worker — precisam ficar iguais ou acima dos limites de download em
+// shared.server.ts (fetchProponentFiles), senão essa camada vira o novo
+// gargalo em vez de só proteger contra um caso que a primeira deixou passar.
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
 
 // Sem timeout próprio, uma resposta lenta do gateway (comum em chamadas que
 // pedem pra IA raciocinar sobre vários critérios de uma vez, com vários PDFs

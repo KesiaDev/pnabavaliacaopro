@@ -7,15 +7,17 @@ import type { AgentFile } from "@/lib/ai-gateway.server";
 
 const BUCKET = "dossies-privados";
 // Limites do caminho inline (download + base64) — todo arquivo passa por
-// aqui, incluindo PDF. Uma tentativa anterior mandava PDF por URL assinada
-// direto pro AI Gateway (achando que evitaria carregar o arquivo na memória
-// do Worker), mas o campo "file_data" da API só aceita data URL em base64,
-// nunca uma URL comum — toda chamada com PDF quebrava com 400 "Invalid file
-// data: ... but got a value without the 'data:' prefix". O limite de
-// tamanho abaixo é o que de fato evita o OOM: arquivo grande demais entra
-// como processamento limitado, nunca é ignorado em silêncio.
-const MAX_DOWNLOAD_FILE_BYTES = 6 * 1024 * 1024;
-const MAX_DOWNLOAD_TOTAL_BYTES = 10 * 1024 * 1024;
+// aqui, incluindo PDF (ver ai-gateway.server.ts para o porquê). Valores
+// calibrados nos mesmos patamares já comprovados em produção (Leonardo, Luiz
+// Antonio Rossa) antes de qualquer uma dessas mudanças — 6MB/10MB era
+// conservador demais e passou a rejeitar arquivos que sempre funcionaram
+// (ex.: um "Documento obrigatorio.pdf" de ~9,5MB). Como agora cada
+// agente/critério roda isolado num Worker próprio (não mais 5 agentes
+// acumulando memória no mesmo processo), há mais folga que na arquitetura
+// original — arquivo grande demais ainda entra como processamento limitado,
+// nunca é ignorado em silêncio.
+const MAX_DOWNLOAD_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_DOWNLOAD_TOTAL_BYTES = 30 * 1024 * 1024;
 
 function bytesFromKb(kb: number | null | undefined): number | null {
   if (typeof kb !== "number" || !Number.isFinite(kb) || kb <= 0) return null;
