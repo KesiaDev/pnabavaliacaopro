@@ -85,8 +85,10 @@ function isTextLike(file: AgentFile): boolean {
 }
 
 function decodeTextFile(file: AgentFile): string {
+  if (!file.data) return "";
   return file.data.toString("utf8").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 20_000);
 }
+
 
 function requireApiKey(): string {
   const key = process.env.LOVABLE_API_KEY;
