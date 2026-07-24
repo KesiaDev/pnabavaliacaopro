@@ -6,12 +6,16 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AgentFile } from "@/lib/ai-gateway.server";
 
 const BUCKET = "dossies-privados";
-// Limites defensivos antes de baixar do Storage. O gargalo real observado em
-// produção foi o Worker morrer por memória ao transformar PDFs de 40–115MB em
-// Buffer/base64 antes mesmo do callAgent conseguir ignorá-los. Portanto o corte
-// precisa acontecer AQUI, antes do download.
-const MAX_DOWNLOAD_FILE_BYTES = 8 * 1024 * 1024;
+// Limites do caminho INLINE (download + base64). PDFs grandes NÃO passam por
+// aqui — eles vão via URL assinada pro AI Gateway, que busca direto do Storage
+// sem tocar na memória do Worker. Só arquivos pequenos e textuais/imagens
+// continuam sendo baixados.
+const MAX_DOWNLOAD_FILE_BYTES = 6 * 1024 * 1024;
 const MAX_DOWNLOAD_TOTAL_BYTES = 10 * 1024 * 1024;
+// Tempo de vida da URL assinada — precisa cobrir uma rodada completa dos
+// agentes (Agente 3 + 4 + 5 + 6 × 5 critérios + 7 + 8, com retries).
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
 
 function bytesFromKb(kb: number | null | undefined): number | null {
   if (typeof kb !== "number" || !Number.isFinite(kb) || kb <= 0) return null;
