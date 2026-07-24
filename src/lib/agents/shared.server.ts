@@ -6,12 +6,16 @@ import type { Database } from "@/integrations/supabase/types";
 import type { AgentFile } from "@/lib/ai-gateway.server";
 
 const BUCKET = "dossies-privados";
-// Limites defensivos antes de baixar do Storage. O gargalo real observado em
-// produção foi o Worker morrer por memória ao transformar PDFs de 40–115MB em
-// Buffer/base64 antes mesmo do callAgent conseguir ignorá-los. Portanto o corte
-// precisa acontecer AQUI, antes do download.
-const MAX_DOWNLOAD_FILE_BYTES = 8 * 1024 * 1024;
+// Limites do caminho INLINE (download + base64). PDFs grandes NÃO passam por
+// aqui — eles vão via URL assinada pro AI Gateway, que busca direto do Storage
+// sem tocar na memória do Worker. Só arquivos pequenos e textuais/imagens
+// continuam sendo baixados.
+const MAX_DOWNLOAD_FILE_BYTES = 6 * 1024 * 1024;
 const MAX_DOWNLOAD_TOTAL_BYTES = 10 * 1024 * 1024;
+// Tempo de vida da URL assinada — precisa cobrir uma rodada completa dos
+// agentes (Agente 3 + 4 + 5 + 6 × 5 critérios + 7 + 8, com retries).
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
 
 function bytesFromKb(kb: number | null | undefined): number | null {
   if (typeof kb !== "number" || !Number.isFinite(kb) || kb <= 0) return null;
@@ -76,10 +80,18 @@ export interface ProponentFile {
   nome: string;
   mimeType: string;
   tipoDocumental: Database["public"]["Enums"]["document_type"] | null;
+  // Um dos dois estará presente:
+  //  - `data`: arquivo baixado inline (pequenos, textos, imagens).
+  //  - `signedUrl`: URL temporária do Storage (PDFs grandes; o gateway busca).
   data: Buffer;
+  signedUrl: string | null;
   tamanhoBytes: number | null;
   processamentoLimitado: boolean;
   observacaoProcessamento: string | null;
+}
+
+function isPdfMime(mime: string | null | undefined): boolean {
+  return (mime ?? "").toLowerCase() === "application/pdf";
 }
 
 // Documentos de identidade (identidade/grp/zimbra) só vão para o Agente 3.
@@ -108,6 +120,7 @@ export async function fetchProponentFiles(
     const latest = versions.sort((a, b) => b.versao - a.versao)[0];
     const storagePath = latest?.storage_path ?? file.storage_path;
     const knownSizeBytes = bytesFromKb(latest?.tamanho_kb);
+    const mimeType = file.mime_type ?? "application/octet-stream";
 
     const pushLimited = (reason: string) => {
       result.push({
@@ -117,20 +130,53 @@ export async function fetchProponentFiles(
         mimeType: "text/plain",
         tipoDocumental: file.tipo_documental,
         data: limitedFilePlaceholder(file.nome, reason),
+        signedUrl: null,
         tamanhoBytes: knownSizeBytes,
         processamentoLimitado: true,
         observacaoProcessamento: reason,
       });
     };
 
+    const pushSignedUrl = async (): Promise<boolean> => {
+      const { data: signed, error: signError } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
+      if (signError || !signed?.signedUrl) return false;
+      result.push({
+        id: file.id,
+        versionId: latest?.id ?? null,
+        nome: file.nome,
+        mimeType,
+        tipoDocumental: file.tipo_documental,
+        data: Buffer.alloc(0),
+        signedUrl: signed.signedUrl,
+        tamanhoBytes: knownSizeBytes,
+        processamentoLimitado: false,
+        observacaoProcessamento: null,
+      });
+      return true;
+    };
+
+    // Todo PDF vai por URL assinada — o AI Gateway busca direto do Storage
+    // e o Worker nunca precisa carregar o arquivo em memória. Isso evita o
+    // OOM que estava derrubando os agentes em portfólios de 40–115MB.
+    if (isPdfMime(mimeType)) {
+      const ok = await pushSignedUrl();
+      if (!ok) {
+        pushLimited("não foi possível gerar URL assinada para leitura pelo agente");
+      }
+      continue;
+    }
+
+    // Não-PDF: ainda precisa de download inline (texto/imagem inline via base64).
     if (knownSizeBytes && knownSizeBytes > MAX_DOWNLOAD_FILE_BYTES) {
       pushLimited(
-        `arquivo com aproximadamente ${Math.ceil(knownSizeBytes / 1024 / 1024)}MB excede o limite seguro de processamento automático`,
+        `arquivo com aproximadamente ${Math.ceil(knownSizeBytes / 1024 / 1024)}MB excede o limite seguro de processamento inline`,
       );
       continue;
     }
     if (knownSizeBytes && totalDownloadedBytes + knownSizeBytes > MAX_DOWNLOAD_TOTAL_BYTES) {
-      pushLimited("limite total seguro de documentos por chamada atingido");
+      pushLimited("limite total seguro de documentos inline por chamada atingido");
       continue;
     }
 
@@ -141,12 +187,12 @@ export async function fetchProponentFiles(
     const arrayBuffer = await blob.arrayBuffer();
     if (arrayBuffer.byteLength > MAX_DOWNLOAD_FILE_BYTES) {
       pushLimited(
-        `arquivo com aproximadamente ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB excede o limite seguro de processamento automático`,
+        `arquivo com aproximadamente ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB excede o limite seguro de processamento inline`,
       );
       continue;
     }
     if (totalDownloadedBytes + arrayBuffer.byteLength > MAX_DOWNLOAD_TOTAL_BYTES) {
-      pushLimited("limite total seguro de documentos por chamada atingido");
+      pushLimited("limite total seguro de documentos inline por chamada atingido");
       continue;
     }
     const buffer = Buffer.from(arrayBuffer);
@@ -155,9 +201,10 @@ export async function fetchProponentFiles(
       id: file.id,
       versionId: latest?.id ?? null,
       nome: file.nome,
-      mimeType: file.mime_type ?? "application/octet-stream",
+      mimeType,
       tipoDocumental: file.tipo_documental,
       data: buffer,
+      signedUrl: null,
       tamanhoBytes: arrayBuffer.byteLength,
       processamentoLimitado: false,
       observacaoProcessamento: null,
@@ -167,8 +214,14 @@ export async function fetchProponentFiles(
 }
 
 export function toAgentFiles(files: ProponentFile[]): AgentFile[] {
-  return files.map((f) => ({ name: f.nome, mimeType: f.mimeType, data: f.data }));
+  return files.map((f) => ({
+    name: f.nome,
+    mimeType: f.mimeType,
+    data: f.signedUrl ? undefined : f.data,
+    signedUrl: f.signedUrl ?? undefined,
+  }));
 }
+
 
 export function findFileByName(files: ProponentFile[], nome: string): ProponentFile | undefined {
   const normalized = nome.trim().toLowerCase();
