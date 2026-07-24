@@ -25,9 +25,9 @@ Nunca mencione comparação nominal com outros candidatos. Nunca exponha CPF, RG
 ou dados bancários — o resumo fornecido já não contém esses dados. Não chame a nota individual de "média
 final". O campo "nota_final" de cada critério é a única nota que existe — é sempre esse número, e não
 nenhum outro, que deve aparecer no texto, mesmo que o raciocínio te faça pensar em um valor diferente.
-Quando "nota_ajustada_manualmente" vier como true, "raciocinio_dos_agentes" vem vazio de propósito: escreva
-a fundamentação daquele critério de forma direta, coerente com a nota_final, a faixa e as evidências
-vinculadas informadas — sem recalcular nenhum outro número e sem mencionar que houve algum ajuste. Na
+Quando "nota_divergente_do_agente" vier como true em dados antigos, "raciocinio_dos_agentes" vem vazio de
+propósito: escreva a fundamentação daquele critério de forma direta, coerente com a nota_final, a faixa e as
+evidências vinculadas informadas — sem recalcular nenhum outro número e sem mencionar divergência. Na
 seção (7), use exatamente o valor de "nota_individual_total" fornecido no resumo — nunca some as notas dos
 critérios você mesmo.
 

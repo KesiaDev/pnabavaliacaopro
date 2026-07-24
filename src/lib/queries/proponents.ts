@@ -97,6 +97,7 @@ export function useApproveEvaluation(proponentId: string) {
       return approveEvaluationByAgentsFn({ data: { proponentId } });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents"] });
       queryClient.invalidateQueries({ queryKey: ["pareceres", proponentId] });
@@ -112,6 +113,7 @@ export function useReopenEvaluation(proponentId: string) {
       return reopenEvaluationFn({ data: { proponentId } });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents"] });
     },
