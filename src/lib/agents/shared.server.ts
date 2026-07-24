@@ -4,6 +4,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { AgentFile } from "@/lib/ai-gateway.server";
+import { extractText, getDocumentProxy } from "unpdf";
 
 const BUCKET = "dossies-privados";
 // Limites do caminho inline (download + base64) — todo arquivo passa por
@@ -18,6 +19,25 @@ const BUCKET = "dossies-privados";
 // nunca é ignorado em silêncio.
 const MAX_DOWNLOAD_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_DOWNLOAD_TOTAL_BYTES = 30 * 1024 * 1024;
+// PDF entre MAX_DOWNLOAD_FILE_BYTES e este limite: baixado e tem só o TEXTO
+// extraído (sem imagens, que são o que normalmente infla o arquivo) — um
+// portfólio de 40-100MB pode ter só algumas dezenas de KB de texto de
+// verdade. Cada arquivo é processado e liberado antes do próximo (loop
+// sequencial), então isso não soma no orçamento de memória do base64 —
+// o risco aqui é só o pico transitório de um arquivo por vez.
+const MAX_EXTRACT_FILE_BYTES = 80 * 1024 * 1024;
+const MAX_EXTRACTED_TEXT_CHARS = 60_000;
+
+async function extractPdfText(buffer: Buffer): Promise<string | null> {
+  try {
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    const trimmed = text.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
 
 function bytesFromKb(kb: number | null | undefined): number | null {
   if (typeof kb !== "number" || !Number.isFinite(kb) || kb <= 0) return null;
@@ -130,13 +150,23 @@ export async function fetchProponentFiles(
       });
     };
 
-    if (knownSizeBytes && knownSizeBytes > MAX_DOWNLOAD_FILE_BYTES) {
+    const isPdf = mimeType.toLowerCase() === "application/pdf";
+    const effectiveMax = isPdf ? MAX_EXTRACT_FILE_BYTES : MAX_DOWNLOAD_FILE_BYTES;
+
+    if (knownSizeBytes && knownSizeBytes > effectiveMax) {
       pushLimited(
-        `arquivo com aproximadamente ${Math.ceil(knownSizeBytes / 1024 / 1024)}MB excede o limite seguro de processamento inline`,
+        `arquivo com aproximadamente ${Math.ceil(knownSizeBytes / 1024 / 1024)}MB excede o limite seguro de processamento automático`,
       );
       continue;
     }
-    if (knownSizeBytes && totalDownloadedBytes + knownSizeBytes > MAX_DOWNLOAD_TOTAL_BYTES) {
+    // O orçamento total (base64) só se aplica quando o arquivo é pequeno o
+    // bastante pra ir embutido — arquivo que vai por extração de texto libera
+    // o buffer bruto antes do próximo item do loop, então não acumula aqui.
+    if (
+      knownSizeBytes &&
+      knownSizeBytes <= MAX_DOWNLOAD_FILE_BYTES &&
+      totalDownloadedBytes + knownSizeBytes > MAX_DOWNLOAD_TOTAL_BYTES
+    ) {
       pushLimited("limite total seguro de documentos inline por chamada atingido");
       continue;
     }
@@ -146,16 +176,45 @@ export async function fetchProponentFiles(
       .download(storagePath);
     if (downloadError || !blob) continue;
     const arrayBuffer = await blob.arrayBuffer();
-    if (arrayBuffer.byteLength > MAX_DOWNLOAD_FILE_BYTES) {
+    if (arrayBuffer.byteLength > effectiveMax) {
       pushLimited(
-        `arquivo com aproximadamente ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB excede o limite seguro de processamento inline`,
+        `arquivo com aproximadamente ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB excede o limite seguro de processamento automático`,
       );
       continue;
     }
-    if (totalDownloadedBytes + arrayBuffer.byteLength > MAX_DOWNLOAD_TOTAL_BYTES) {
-      pushLimited("limite total seguro de documentos inline por chamada atingido");
+
+    if (arrayBuffer.byteLength > MAX_DOWNLOAD_FILE_BYTES) {
+      // PDF grande demais pra embutir inteiro — extrai só o texto (sem as
+      // imagens, que normalmente são o que infla o arquivo) em vez de
+      // desistir do documento inteiro.
+      const buffer = Buffer.from(arrayBuffer);
+      const extracted = await extractPdfText(buffer);
+      if (!extracted) {
+        pushLimited(
+          `arquivo com aproximadamente ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB não pôde ter texto extraído automaticamente (pode ser digitalização sem camada de texto)`,
+        );
+        continue;
+      }
+      const truncated = extracted.length > MAX_EXTRACTED_TEXT_CHARS;
+      const text =
+        (truncated ? extracted.slice(0, MAX_EXTRACTED_TEXT_CHARS) : extracted) +
+        (truncated
+          ? "\n\n[TEXTO TRUNCADO — o documento original é maior; isto não é o conteúdo completo.]"
+          : "");
+      result.push({
+        id: file.id,
+        versionId: latest?.id ?? null,
+        nome: file.nome,
+        mimeType: "text/plain",
+        tipoDocumental: file.tipo_documental,
+        data: Buffer.from(text, "utf8"),
+        tamanhoBytes: arrayBuffer.byteLength,
+        processamentoLimitado: false,
+        observacaoProcessamento: `PDF de ${Math.ceil(arrayBuffer.byteLength / 1024 / 1024)}MB — apenas o texto extraído foi enviado ao agente, sem imagens.`,
+      });
       continue;
     }
+
     const buffer = Buffer.from(arrayBuffer);
     totalDownloadedBytes += buffer.length;
     result.push({
