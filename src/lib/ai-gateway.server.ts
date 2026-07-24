@@ -5,10 +5,13 @@ import type { z } from "zod";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-5.5";
-// Limites APENAS para arquivos anexados inline (base64). PDFs são anexados
-// via URL assinada do Storage e não pesam nesses limites — o provedor busca
-// diretamente. Assim portfólios de 40–115MB voltam a ser lidos pelos agentes
-// sem estourar memória do Worker.
+// Todo arquivo (PDF incluso) vai embutido em base64 — o campo "file_data" da
+// API só aceita data URL em base64, nunca uma URL comum (uma tentativa
+// anterior de mandar PDF por URL assinada quebrava toda chamada com 400
+// "Invalid file data: ... but got a value without the 'data:' prefix"). Os
+// limites abaixo são a segunda camada de defesa contra estourar memória do
+// Worker — a primeira já filtra em shared.server.ts (fetchProponentFiles),
+// então na prática o que chega aqui já está bem abaixo destes valores.
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
 
@@ -32,10 +35,7 @@ const JSON_ONLY_SUFFIX =
 export interface AgentFile {
   name: string;
   mimeType: string;
-  // Um dos dois precisa estar presente. `signedUrl` é preferido para PDFs
-  // grandes — o gateway busca do Storage sem transitar pela memória do Worker.
   data?: Buffer;
-  signedUrl?: string;
 }
 
 interface ChatContentBlock {
@@ -70,7 +70,6 @@ function isPdf(file: AgentFile): boolean {
   return false;
 }
 
-
 function isImage(file: AgentFile): boolean {
   return file.mimeType.startsWith("image/");
 }
@@ -86,9 +85,11 @@ function isTextLike(file: AgentFile): boolean {
 
 function decodeTextFile(file: AgentFile): string {
   if (!file.data) return "";
-  return file.data.toString("utf8").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 20_000);
+  return file.data
+    .toString("utf8")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .slice(0, 20_000);
 }
-
 
 function requireApiKey(): string {
   const key = process.env.LOVABLE_API_KEY;
@@ -176,14 +177,6 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
   const textFileBlocks: string[] = [];
   let totalBytes = 0;
   for (const file of params.files ?? []) {
-    // PDF via URL assinada — não pesa nos limites inline, o gateway busca sozinho.
-    if (isPdf(file) && file.signedUrl) {
-      fileBlocks.push({
-        type: "file",
-        file: { filename: file.name, file_data: file.signedUrl },
-      });
-      continue;
-    }
     if (!file.data || file.data.length === 0) {
       skippedFiles.push(`${file.name} (conteúdo indisponível para leitura automática)`);
       continue;
@@ -216,7 +209,6 @@ export async function callAgent<T>(params: CallAgentParams<T>): Promise<CallAgen
     }
     skippedFiles.push(`${file.name} (formato não suportado: ${file.mimeType})`);
   }
-
 
   const textAttachmentNote =
     textFileBlocks.length > 0
