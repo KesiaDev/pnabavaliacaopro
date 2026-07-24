@@ -10,36 +10,6 @@
 // limpa e falhas ficam isoladas por etapa.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-async function requireAdministradora(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "administradora",
-  });
-  if (error || !data) {
-    throw new Error("Apenas a administradora pode executar esta ação.");
-  }
-}
-
-// Marca como "erro" qualquer agent_run deixado "em_andamento" por mais de 5
-// minutos (Worker morto sem passar pelo catch/finally). Sem isso, um 502 no
-// meio da execução deixa a linha travada no histórico e o próximo run começa
-// sobre um estado incoerente.
-async function reapStuckRuns(supabase: SupabaseClient, proponentId: string) {
-  const cutoff = new Date(Date.now() - 5 * 60_000).toISOString();
-  await supabase
-    .from("agent_runs")
-    .update({
-      status: "erro",
-      finished_at: new Date().toISOString(),
-      error_message:
-        "Execução interrompida (provável timeout ou limite de memória do Worker). Reexecute os agentes.",
-    })
-    .eq("proponent_id", proponentId)
-    .eq("status", "em_andamento")
-    .lt("started_at", cutoff);
-}
 
 // Etapa 1 (orquestrador): verifica pré-condições, limpa runs órfãos e libera
 // o cliente para chamar os demais agentes um a um.
@@ -47,8 +17,10 @@ export const startAgentPipelineFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
-    const supabase = context.supabase;
+    const { getAuthorizedAdminSupabase, reapStuckRuns } = await import(
+      "@/lib/agent-actions.server"
+    );
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const proponentId = data.proponentId;
 
     await reapStuckRuns(supabase, proponentId);
@@ -100,9 +72,10 @@ export const runAgent3Fn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent3 } = await import("@/lib/agents/agent3-classification.server");
-    return runAgent3(context.supabase, data.proponentId, context.userId);
+    return runAgent3(supabase, data.proponentId, context.userId);
   });
 
 // Chamado pelo cliente quando a infraestrutura derruba uma etapa (ex.: 502 por
@@ -112,8 +85,9 @@ export const markAgentStepFailedFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string; agentName: string; errorMessage: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
-    await context.supabase
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
+    await supabase
       .from("agent_runs")
       .update({
         status: "erro",
@@ -130,18 +104,20 @@ export const runAgent4Fn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent4 } = await import("@/lib/agents/agent4-ciclo1.server");
-    return runAgent4(context.supabase, data.proponentId, context.userId);
+    return runAgent4(supabase, data.proponentId, context.userId);
   });
 
 export const runAgent5Fn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent5 } = await import("@/lib/agents/agent5-criterio-a.server");
-    return runAgent5(context.supabase, data.proponentId, context.userId);
+    return runAgent5(supabase, data.proponentId, context.userId);
   });
 
 // Agente 6 avalia 4 critérios; expomos um por chamada para dar a cada critério
@@ -150,18 +126,20 @@ export const runAgent6CriterionFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string; criterion: "B" | "C" | "D" | "E" }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent6Criterion } = await import("@/lib/agents/agent6-merito.server");
-    return runAgent6Criterion(context.supabase, data.proponentId, data.criterion, context.userId);
+    return runAgent6Criterion(supabase, data.proponentId, data.criterion, context.userId);
   });
 
 export const runAgent7Fn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent7 } = await import("@/lib/agents/agent7-bonus.server");
-    return runAgent7(context.supabase, data.proponentId, context.userId);
+    return runAgent7(supabase, data.proponentId, context.userId);
   });
 
 // Fecha o pipeline: só muda status do proponente se ainda não estiver adiante.
@@ -169,8 +147,8 @@ export const finishAgentPipelineFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
-    const supabase = context.supabase;
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { data: currentProponent } = await supabase
       .from("proponents")
       .select("status")
@@ -188,17 +166,97 @@ export const finishAgentPipelineFn = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-// Agente 8 (Auditor e Relator) roda sozinho, separado do restante do squad —
-// só depois que a avaliadora aprovou a avaliação (nota final definida por
-// critério, sem pendência aberta). Rodar antes disso produzia uma minuta
-// baseada na proposta dos agentes, que ficava desatualizada assim que a
-// avaliadora ajustava alguma nota. Chamado automaticamente por
-// useApproveEvaluation, e disponível também para regeneração manual.
+export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: { proponentId: string }) => data)
+  .handler(async ({ context, data }) => {
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
+    const proponentId = data.proponentId;
+    const requiredCriteria = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
+    const { data: scores, error: scoresError } = await supabase
+      .from("criterion_scores")
+      .select("id, criterion, proposed_score, human_review_required")
+      .eq("proponent_id", proponentId)
+      .order("criterion", { ascending: true });
+    if (scoresError || !scores) throw new Error("Não foi possível carregar as notas dos agentes.");
+
+    const byCriterion = new Map(scores.map((score) => [score.criterion, score]));
+    const missing = requiredCriteria.filter((criterion) => {
+      const score = byCriterion.get(criterion);
+      return !score || score.proposed_score == null;
+    });
+    if (missing.length > 0) {
+      throw new Error(
+        `Aprovação bloqueada: faltam notas propostas pelos agentes nos critérios ${missing.join(", ")}. Reexecute os agentes antes de aprovar.`,
+      );
+    }
+
+    const pending = scores
+      .filter((score) => score.human_review_required)
+      .map((score) => score.criterion);
+    if (pending.length > 0) {
+      throw new Error(
+        `Aprovação bloqueada: os agentes sinalizaram revisão obrigatória nos critérios ${pending.join(", ")}. Resolva reexecutando/processando os documentos antes de finalizar.`,
+      );
+    }
+
+    for (const score of scores) {
+      await supabase
+        .from("criterion_scores")
+        .update({ approved_score: score.proposed_score, human_review_required: false })
+        .eq("id", score.id);
+    }
+
+    const { error: evalError } = await supabase
+      .from("evaluations")
+      .update({ status: "aprovado_pela_avaliadora" })
+      .eq("proponent_id", proponentId);
+    if (evalError) throw new Error("Não foi possível aprovar a avaliação consolidada.");
+
+    const { error: statusError } = await supabase
+      .from("proponents")
+      .update({ status: "aprovado_pela_avaliadora" })
+      .eq("id", proponentId);
+    if (statusError) throw new Error("Não foi possível atualizar o status do proponente.");
+
+    let parecerError: string | null = null;
+    try {
+      const { runAgent8 } = await import("@/lib/agents/agent8-auditor.server");
+      await runAgent8(supabase, proponentId, context.userId);
+    } catch (err) {
+      parecerError = err instanceof Error ? err.message : String(err);
+    }
+
+    return { parecerError };
+  });
+
+export const reopenEvaluationFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: { proponentId: string }) => data)
+  .handler(async ({ context, data }) => {
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
+
+    await supabase.from("proponents").update({ status: "reaberto" }).eq("id", data.proponentId);
+    await supabase
+      .from("evaluations")
+      .update({ status: "reaberto" })
+      .eq("proponent_id", data.proponentId);
+
+    return { ok: true as const };
+  });
+
+// Agente 8 (Auditor e Relator) roda separado do restante do squad — só depois
+// que todos os critérios têm nota proposta pelos agentes e nenhuma pendência
+// aberta. Ele não cria nota: apenas redige a partir das notas já aprovadas.
 export const generateParecerFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: { proponentId: string }) => data)
   .handler(async ({ context, data }) => {
-    await requireAdministradora(context.supabase, context.userId);
+    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
+    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
     const { runAgent8 } = await import("@/lib/agents/agent8-auditor.server");
-    return runAgent8(context.supabase, data.proponentId, context.userId);
+    return runAgent8(supabase, data.proponentId, context.userId);
   });

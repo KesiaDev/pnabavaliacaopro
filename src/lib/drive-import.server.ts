@@ -368,8 +368,9 @@ async function processFile(args: {
       })
       .eq("id", existing.id);
 
-    // Seção 5.5: arquivo novo/alterado em candidatura já avaliada gera
-    // bloqueio e revisão humana — nunca muda a nota aprovada silenciosamente.
+    // Seção 5.5: arquivo novo/alterado em candidatura já avaliada invalida a
+    // avaliação consolidada. A reavaliação deve ser feita pelos agentes; a
+    // sincronização não marca critérios nem notas manualmente.
     const { data: evaluation } = await supabase
       .from("evaluations")
       .select("status")
@@ -382,11 +383,7 @@ async function processFile(args: {
         .from("evaluations")
         .update({ status: "reaberto" })
         .eq("proponent_id", proponentId);
-      await supabase
-        .from("criterion_scores")
-        .update({ human_review_required: true })
-        .eq("proponent_id", proponentId);
-      acao = "Bloquear e revisar avaliação já aprovada";
+      acao = "Bloquear e reexecutar agentes";
     }
 
     stats.arquivosAlterados += 1;

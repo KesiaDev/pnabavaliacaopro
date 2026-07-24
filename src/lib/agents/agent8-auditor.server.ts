@@ -98,26 +98,20 @@ export async function runAgent8(
       proponente: proponent?.nome_canonico,
       categoria: proponent?.categoria,
       ciclo1_alerta: proponent?.ciclo1_alerta,
-      // "nota_final" é sempre a nota da avaliadora (approved_score) — nunca a
-      // proposta original dos agentes. Esta função só roda depois da
-      // aprovação, então approved_score já deveria estar definido para todo
-      // critério; o fallback existe só por segurança. Quando a avaliadora
-      // ajustou manualmente a nota (approved_score difere do proposed_score
-      // dos agentes), o raciocínio original dos agentes é omitido do resumo
-      // de propósito — ele argumenta para outro número e só confundiria o
-      // texto final (era exatamente essa a causa de a minuta continuar
-      // citando a nota antiga mesmo depois do fix anterior).
+      // "nota_final" é sempre a nota consolidada pelo backend a partir da nota
+      // proposta pelos agentes. Esta função só roda depois da aprovação, então
+      // approved_score já deve estar definido para todo critério; o fallback
+      // existe apenas por segurança contra dados antigos.
       criterios: (scores ?? []).map((s) => {
         const notaFinal = s.approved_score ?? s.proposed_score;
-        const ajustadaManualmente =
-          s.approved_score != null && s.approved_score !== s.proposed_score;
+        const divergenteDoAgente = s.approved_score != null && s.approved_score !== s.proposed_score;
         return {
           criterio: s.criterion,
           max: s.max_score,
           nota_final: notaFinal,
           faixa: s.applied_band,
-          nota_ajustada_manualmente: ajustadaManualmente,
-          raciocinio_dos_agentes: ajustadaManualmente ? null : s.justification,
+          nota_divergente_do_agente: divergenteDoAgente,
+          raciocinio_dos_agentes: divergenteDoAgente ? null : s.justification,
           evidencias_vinculadas: evidenceByCriterion.get(s.criterion) ?? 0,
         };
       }),
