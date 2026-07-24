@@ -25,9 +25,9 @@ Nunca mencione comparação nominal com outros candidatos. Nunca exponha CPF, RG
 ou dados bancários — o resumo fornecido já não contém esses dados. Não chame a nota individual de "média
 final". O campo "nota_final" de cada critério é a única nota que existe — é sempre esse número, e não
 nenhum outro, que deve aparecer no texto, mesmo que o raciocínio te faça pensar em um valor diferente.
-Quando "nota_ajustada_manualmente" vier como true, "raciocinio_dos_agentes" vem vazio de propósito: escreva
-a fundamentação daquele critério de forma direta, coerente com a nota_final, a faixa e as evidências
-vinculadas informadas — sem recalcular nenhum outro número e sem mencionar que houve algum ajuste. Na
+Quando "nota_divergente_do_agente" vier como true em dados antigos, "raciocinio_dos_agentes" vem vazio de
+propósito: escreva a fundamentação daquele critério de forma direta, coerente com a nota_final, a faixa e as
+evidências vinculadas informadas — sem recalcular nenhum outro número e sem mencionar divergência. Na
 seção (7), use exatamente o valor de "nota_individual_total" fornecido no resumo — nunca some as notas dos
 critérios você mesmo.
 
@@ -98,26 +98,20 @@ export async function runAgent8(
       proponente: proponent?.nome_canonico,
       categoria: proponent?.categoria,
       ciclo1_alerta: proponent?.ciclo1_alerta,
-      // "nota_final" é sempre a nota da avaliadora (approved_score) — nunca a
-      // proposta original dos agentes. Esta função só roda depois da
-      // aprovação, então approved_score já deveria estar definido para todo
-      // critério; o fallback existe só por segurança. Quando a avaliadora
-      // ajustou manualmente a nota (approved_score difere do proposed_score
-      // dos agentes), o raciocínio original dos agentes é omitido do resumo
-      // de propósito — ele argumenta para outro número e só confundiria o
-      // texto final (era exatamente essa a causa de a minuta continuar
-      // citando a nota antiga mesmo depois do fix anterior).
+      // "nota_final" é sempre a nota consolidada pelo backend a partir da nota
+      // proposta pelos agentes. Esta função só roda depois da aprovação, então
+      // approved_score já deve estar definido para todo critério; o fallback
+      // existe apenas por segurança contra dados antigos.
       criterios: (scores ?? []).map((s) => {
         const notaFinal = s.approved_score ?? s.proposed_score;
-        const ajustadaManualmente =
-          s.approved_score != null && s.approved_score !== s.proposed_score;
+        const divergenteDoAgente = s.approved_score != null && s.approved_score !== s.proposed_score;
         return {
           criterio: s.criterion,
           max: s.max_score,
           nota_final: notaFinal,
           faixa: s.applied_band,
-          nota_ajustada_manualmente: ajustadaManualmente,
-          raciocinio_dos_agentes: ajustadaManualmente ? null : s.justification,
+          nota_divergente_do_agente: divergenteDoAgente,
+          raciocinio_dos_agentes: divergenteDoAgente ? null : s.justification,
           evidencias_vinculadas: evidenceByCriterion.get(s.criterion) ?? 0,
         };
       }),

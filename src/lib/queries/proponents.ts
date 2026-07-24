@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types";
 import { generateFichaFn } from "@/lib/ficha-actions";
-import { generateParecerFn } from "@/lib/agent-actions";
+import { approveEvaluationByAgentsFn, generateParecerFn, reopenEvaluationFn } from "@/lib/agent-actions";
 
 export type TipoProponente = Enums<"tipo_proponente">;
 
@@ -90,69 +90,32 @@ export function useCriterionScores(proponentId: string) {
   });
 }
 
-export function useUpdateCriterionScore(proponentId: string) {
+export function useApproveEvaluation(proponentId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: {
-      id: string;
-      approved_score: number | null;
-      human_review_required: boolean;
-      justification?: string;
-    }) => {
-      const patch: {
-        approved_score: number | null;
-        human_review_required: boolean;
-        justification?: string;
-      } = {
-        approved_score: params.approved_score,
-        human_review_required: params.human_review_required,
-      };
-      if (params.justification !== undefined) patch.justification = params.justification;
-      const { error } = await supabase.from("criterion_scores").update(patch).eq("id", params.id);
-      if (error) throw error;
+    mutationFn: async () => {
+      return approveEvaluationByAgentsFn({ data: { proponentId } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents"] });
+      queryClient.invalidateQueries({ queryKey: ["pareceres", proponentId] });
+      queryClient.invalidateQueries({ queryKey: ["flags", proponentId] });
     },
   });
 }
 
-export function useApproveEvaluation(proponentId: string) {
+export function useReopenEvaluation(proponentId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { error: evalError } = await supabase
-        .from("evaluations")
-        .update({ status: "aprovado_pela_avaliadora" })
-        .eq("proponent_id", proponentId);
-      if (evalError) throw evalError;
-
-      const { error: statusError } = await supabase
-        .from("proponents")
-        .update({ status: "aprovado_pela_avaliadora" })
-        .eq("id", proponentId);
-      if (statusError) throw statusError;
-
-      // A minuta de parecer só é escrita agora, com as notas finais — gerá-la
-      // antes deixava o texto desatualizado assim que a avaliadora ajustava
-      // alguma nota depois da proposta inicial dos agentes. Se essa etapa
-      // falhar (ex.: instabilidade do modelo), a aprovação já está valendo;
-      // a minuta pode ser gerada de novo manualmente na aba Minuta de parecer.
-      let parecerError: string | null = null;
-      try {
-        await generateParecerFn({ data: { proponentId } });
-      } catch (err) {
-        parecerError = err instanceof Error ? err.message : String(err);
-      }
-      return { parecerError };
+      return reopenEvaluationFn({ data: { proponentId } });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents"] });
-      queryClient.invalidateQueries({ queryKey: ["pareceres", proponentId] });
-      queryClient.invalidateQueries({ queryKey: ["flags", proponentId] });
     },
   });
 }
