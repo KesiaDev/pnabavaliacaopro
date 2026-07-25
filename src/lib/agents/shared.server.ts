@@ -4,7 +4,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { AgentFile } from "@/lib/ai-gateway.server";
-import { extractText, getDocumentProxy } from "unpdf";
 
 const BUCKET = "dossies-privados";
 // Limites do caminho inline (download + base64) — todo arquivo passa por
@@ -30,6 +29,13 @@ const MAX_EXTRACTED_TEXT_CHARS = 60_000;
 
 async function extractPdfText(buffer: Buffer): Promise<string | null> {
   try {
+    // Import dinâmico de propósito: unpdf pesa ~550KB (gzip) e todo agente
+    // importa este módulo (shared.server.ts) só pra usar startAgentRun etc. —
+    // carregar unpdf estaticamente puxava esse peso pra TODA chamada, mesmo
+    // sem nenhum PDF grande, e é a explicação mais provável pra um "Internal
+    // server error" imediato num agente que nem tinha arquivo grande pra
+    // processar. Só carrega de verdade quando um arquivo realmente precisa.
+    const { extractText, getDocumentProxy } = await import("unpdf");
     const pdf = await getDocumentProxy(new Uint8Array(buffer));
     const { text } = await extractText(pdf, { mergePages: true });
     const trimmed = text.trim();
