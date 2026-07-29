@@ -213,13 +213,19 @@ export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
     if (scoresError || !scores) throw new Error("Não foi possível carregar as notas dos agentes.");
 
     const byCriterion = new Map(scores.map((score) => [score.criterion, score]));
+    // A revisão humana é soberana: uma nota que a avaliadora já reviu e salvou
+    // manualmente (approved_score) supre a ausência de proposed_score do
+    // agente — falha técnica do agente não pode impedir a avaliadora de
+    // aprovar depois de ela mesma ter atribuído e justificado a nota. Só
+    // bloqueia quando o critério não tem nota nenhuma, nem do agente nem da
+    // avaliadora. Ver [[feedback-pnab-human-review]] na memória do projeto.
     const missing = requiredCriteria.filter((criterion) => {
       const score = byCriterion.get(criterion);
-      return !score || score.proposed_score == null;
+      return !score || (score.proposed_score == null && score.approved_score == null);
     });
     if (missing.length > 0) {
       throw new Error(
-        `Aprovação bloqueada: faltam notas propostas pelos agentes nos critérios ${missing.join(", ")}. Reexecute os agentes antes de aprovar.`,
+        `Aprovação bloqueada: faltam notas (dos agentes ou da avaliadora) nos critérios ${missing.join(", ")}. Atribua a nota manualmente nesses critérios ou reexecute os agentes antes de aprovar.`,
       );
     }
 
