@@ -287,7 +287,7 @@ export function useUpdateEditalStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { editalId: string; status: EditalStatus; reason?: string }) => {
-      const patch: Record<string, unknown> = {
+      const patch: Partial<EditalRow> = {
         status: input.status,
         updated_at: new Date().toISOString(),
       };
@@ -300,6 +300,7 @@ export function useUpdateEditalStatus() {
         patch.closed_at = null;
       }
       const { error } = await supabase.from("editais").update(patch).eq("id", input.editalId);
+
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: editaisKeys.all }),
