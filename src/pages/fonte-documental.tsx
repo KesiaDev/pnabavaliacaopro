@@ -198,6 +198,12 @@ export function FonteDocumental({ search, editalId }: { search: FonteSearch; edi
                   </Button>
                 </div>
               )}
+              {saveSource.isError && (
+                <p className="text-xs text-destructive">
+                  {(saveSource.error as Error | undefined)?.message ??
+                    "Falha ao salvar a pasta-fonte."}
+                </p>
+              )}
               {(runBaseline.isError || runSync.isError) && (
                 <p className="text-xs text-destructive">
                   {(runBaseline.error as Error | undefined)?.message ??
