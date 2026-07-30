@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { editalScopedKey, useEditalContext } from "@/contexts/edital-context";
 import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types";
 import { generateFichaFn } from "@/lib/ficha-actions";
 import {
