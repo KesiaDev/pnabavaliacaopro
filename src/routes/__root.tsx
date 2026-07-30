@@ -14,6 +14,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useAuth } from "../hooks/use-auth";
+import { EditalProvider } from "../contexts/edital-context";
 
 function NotFoundComponent() {
   return (
@@ -80,23 +81,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PNAB Caxias — Avaliação Assistida | Edital 119/2026" },
+      { title: "PNAB Avaliação Pro — Avaliação documental assistida" },
       {
         name: "description",
         content:
-          "Plataforma privada de avaliação documental assistida do Edital 119/2026 (PNAB Ciclo 2) — Caxias do Sul.",
+          "Plataforma privada multiedital de avaliação documental assistida com revisão humana obrigatória.",
       },
       { name: "author", content: "Viviane da Rocha Palma" },
       { name: "robots", content: "noindex, nofollow" },
-      { property: "og:title", content: "PNAB Caxias — Avaliação Assistida | Edital 119/2026" },
+      { property: "og:title", content: "PNAB Avaliação Pro — Avaliação documental assistida" },
       {
         property: "og:description",
-        content: "Plataforma privada de avaliação documental assistida do Edital 119/2026 (PNAB Ciclo 2) — Caxias do Sul.",
+        content: "Plataforma privada multiedital de avaliação documental assistida com revisão humana obrigatória.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "PNAB Caxias — Avaliação Assistida | Edital 119/2026" },
-      { name: "twitter:description", content: "Plataforma privada de avaliação documental assistida do Edital 119/2026 (PNAB Ciclo 2) — Caxias do Sul." },
+      { name: "twitter:title", content: "PNAB Avaliação Pro — Avaliação documental assistida" },
+      { name: "twitter:description", content: "Plataforma privada multiedital de avaliação documental assistida com revisão humana obrigatória." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f98972f9-7122-4362-a51c-82f78da374c9" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f98972f9-7122-4362-a51c-82f78da374c9" },
     ],
@@ -137,8 +138,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthGate>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <EditalProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </EditalProvider>
       </AuthGate>
     </QueryClientProvider>
   );
@@ -156,7 +159,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     if (!session && !isPublic) {
       navigate({ to: "/login" });
     } else if (session && pathname === "/login") {
-      navigate({ to: "/" });
+      navigate({ to: "/editais" });
     }
   }, [loading, session, pathname, isPublic, navigate]);
 
