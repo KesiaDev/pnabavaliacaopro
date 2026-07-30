@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { editalScopedKey, useEditalContext } from "@/contexts/edital-context";
 import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types";
 import { generateFichaFn } from "@/lib/ficha-actions";
 import {
@@ -22,13 +23,17 @@ export type ProponentWithEvaluation = ProponentRow & {
   criterion_scores: Pick<CriterionScoreRow, "human_review_required">[];
 };
 
+/** Sempre escopado ao edital ativo: nenhum dado atravessa editais. */
 export function useProponents() {
+  const { editalId } = useEditalContext();
   return useQuery({
-    queryKey: ["proponents"],
+    queryKey: editalScopedKey(editalId, "proponents"),
+    enabled: !!editalId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("proponents")
         .select("*, evaluations(*), criterion_scores(human_review_required)")
+        .eq("edital_id", editalId!)
         .order("atualizado_em", { ascending: false });
       if (error) throw error;
       return data as ProponentWithEvaluation[];
@@ -54,17 +59,23 @@ export function useProponent(id: string) {
 
 export function useCreateProponent() {
   const queryClient = useQueryClient();
+  const { editalId } = useEditalContext();
   return useMutation({
     mutationFn: async (input: TablesInsert<"proponents">) => {
-      const { data, error } = await supabase.from("proponents").insert(input).select().single();
+      const { data, error } = await supabase
+        .from("proponents")
+        .insert({ ...input, edital_id: editalId })
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["proponents"] });
+      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "proponents") });
     },
   });
 }
+
 
 export function useDeleteProponent() {
   const queryClient = useQueryClient();

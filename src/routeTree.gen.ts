@@ -17,7 +17,20 @@ import { Route as DocumentosNormativosRouteImport } from './routes/documentos-no
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
+import { Route as EditaisIndexRouteImport } from './routes/editais/index'
 import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
+import { Route as EditaisNovoRouteImport } from './routes/editais/novo'
+import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
+import { Route as EditaisEditalIdProcessamentoRouteImport } from './routes/editais/$editalId/processamento'
+import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
+import { Route as EditaisEditalIdMudancasRouteImport } from './routes/editais/$editalId/mudancas'
+import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
+import { Route as EditaisEditalIdDocumentosNormativosRouteImport } from './routes/editais/$editalId/documentos-normativos'
+import { Route as EditaisEditalIdCustosRouteImport } from './routes/editais/$editalId/custos'
+import { Route as EditaisEditalIdConfiguracaoRouteImport } from './routes/editais/$editalId/configuracao'
+import { Route as EditaisEditalIdAuditoriaRouteImport } from './routes/editais/$editalId/auditoria'
+import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
+import { Route as EditaisEditalIdProponentesApplicationIdRouteImport } from './routes/editais/$editalId/proponentes/$applicationId'
 import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -60,11 +73,83 @@ const ProponentesIndexRoute = ProponentesIndexRouteImport.update({
   path: '/proponentes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditaisIndexRoute = EditaisIndexRouteImport.update({
+  id: '/editais/',
+  path: '/editais/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProponentesIdRoute = ProponentesIdRouteImport.update({
   id: '/proponentes/$id',
   path: '/proponentes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditaisNovoRoute = EditaisNovoRouteImport.update({
+  id: '/editais/novo',
+  path: '/editais/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdIndexRoute = EditaisEditalIdIndexRouteImport.update({
+  id: '/editais/$editalId/',
+  path: '/editais/$editalId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdProcessamentoRoute =
+  EditaisEditalIdProcessamentoRouteImport.update({
+    id: '/editais/$editalId/processamento',
+    path: '/editais/$editalId/processamento',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdPainelRoute = EditaisEditalIdPainelRouteImport.update({
+  id: '/editais/$editalId/painel',
+  path: '/editais/$editalId/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdMudancasRoute = EditaisEditalIdMudancasRouteImport.update({
+  id: '/editais/$editalId/mudancas',
+  path: '/editais/$editalId/mudancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdFonteDocumentalRoute =
+  EditaisEditalIdFonteDocumentalRouteImport.update({
+    id: '/editais/$editalId/fonte-documental',
+    path: '/editais/$editalId/fonte-documental',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdDocumentosNormativosRoute =
+  EditaisEditalIdDocumentosNormativosRouteImport.update({
+    id: '/editais/$editalId/documentos-normativos',
+    path: '/editais/$editalId/documentos-normativos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdCustosRoute = EditaisEditalIdCustosRouteImport.update({
+  id: '/editais/$editalId/custos',
+  path: '/editais/$editalId/custos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdConfiguracaoRoute =
+  EditaisEditalIdConfiguracaoRouteImport.update({
+    id: '/editais/$editalId/configuracao',
+    path: '/editais/$editalId/configuracao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdAuditoriaRoute =
+  EditaisEditalIdAuditoriaRouteImport.update({
+    id: '/editais/$editalId/auditoria',
+    path: '/editais/$editalId/auditoria',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdProponentesIndexRoute =
+  EditaisEditalIdProponentesIndexRouteImport.update({
+    id: '/editais/$editalId/proponentes/',
+    path: '/editais/$editalId/proponentes/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdProponentesApplicationIdRoute =
+  EditaisEditalIdProponentesApplicationIdRouteImport.update({
+    id: '/editais/$editalId/proponentes/$applicationId',
+    path: '/editais/$editalId/proponentes/$applicationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiGoogleOauthCallbackRoute = ApiGoogleOauthCallbackRouteImport.update({
   id: '/api/google/oauth/callback',
   path: '/api/google/oauth/callback',
@@ -79,9 +164,22 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
+  '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
+  '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
+  '/editais/$editalId/processamento': typeof EditaisEditalIdProcessamentoRoute
+  '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
+  '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,9 +189,22 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
+  '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
+  '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
+  '/editais/$editalId/processamento': typeof EditaisEditalIdProcessamentoRoute
+  '/editais/$editalId': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
+  '/editais/$editalId/proponentes': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,9 +215,22 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
+  '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
+  '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
+  '/editais/$editalId/processamento': typeof EditaisEditalIdProcessamentoRoute
+  '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
+  '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,9 +242,22 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
+    | '/editais/'
     | '/proponentes/'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
+    | '/editais/$editalId/documentos-normativos'
+    | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
+    | '/editais/$editalId/painel'
+    | '/editais/$editalId/processamento'
+    | '/editais/$editalId/'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes/$applicationId'
+    | '/editais/$editalId/proponentes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,9 +267,22 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
+    | '/editais'
     | '/proponentes'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
+    | '/editais/$editalId/documentos-normativos'
+    | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
+    | '/editais/$editalId/painel'
+    | '/editais/$editalId/processamento'
+    | '/editais/$editalId'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes/$applicationId'
+    | '/editais/$editalId/proponentes'
   id:
     | '__root__'
     | '/'
@@ -142,9 +292,22 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
+    | '/editais/'
     | '/proponentes/'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
+    | '/editais/$editalId/documentos-normativos'
+    | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
+    | '/editais/$editalId/painel'
+    | '/editais/$editalId/processamento'
+    | '/editais/$editalId/'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes/$applicationId'
+    | '/editais/$editalId/proponentes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -155,9 +318,22 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MudancasRoute: typeof MudancasRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  EditaisNovoRoute: typeof EditaisNovoRoute
   ProponentesIdRoute: typeof ProponentesIdRoute
+  EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
+  EditaisEditalIdAuditoriaRoute: typeof EditaisEditalIdAuditoriaRoute
+  EditaisEditalIdConfiguracaoRoute: typeof EditaisEditalIdConfiguracaoRoute
+  EditaisEditalIdCustosRoute: typeof EditaisEditalIdCustosRoute
+  EditaisEditalIdDocumentosNormativosRoute: typeof EditaisEditalIdDocumentosNormativosRoute
+  EditaisEditalIdFonteDocumentalRoute: typeof EditaisEditalIdFonteDocumentalRoute
+  EditaisEditalIdMudancasRoute: typeof EditaisEditalIdMudancasRoute
+  EditaisEditalIdPainelRoute: typeof EditaisEditalIdPainelRoute
+  EditaisEditalIdProcessamentoRoute: typeof EditaisEditalIdProcessamentoRoute
+  EditaisEditalIdIndexRoute: typeof EditaisEditalIdIndexRoute
   ApiGoogleOauthCallbackRoute: typeof ApiGoogleOauthCallbackRoute
+  EditaisEditalIdProponentesApplicationIdRoute: typeof EditaisEditalIdProponentesApplicationIdRoute
+  EditaisEditalIdProponentesIndexRoute: typeof EditaisEditalIdProponentesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,11 +394,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProponentesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editais/': {
+      id: '/editais/'
+      path: '/editais'
+      fullPath: '/editais/'
+      preLoaderRoute: typeof EditaisIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proponentes/$id': {
       id: '/proponentes/$id'
       path: '/proponentes/$id'
       fullPath: '/proponentes/$id'
       preLoaderRoute: typeof ProponentesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/novo': {
+      id: '/editais/novo'
+      path: '/editais/novo'
+      fullPath: '/editais/novo'
+      preLoaderRoute: typeof EditaisNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/': {
+      id: '/editais/$editalId/'
+      path: '/editais/$editalId'
+      fullPath: '/editais/$editalId/'
+      preLoaderRoute: typeof EditaisEditalIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/processamento': {
+      id: '/editais/$editalId/processamento'
+      path: '/editais/$editalId/processamento'
+      fullPath: '/editais/$editalId/processamento'
+      preLoaderRoute: typeof EditaisEditalIdProcessamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/painel': {
+      id: '/editais/$editalId/painel'
+      path: '/editais/$editalId/painel'
+      fullPath: '/editais/$editalId/painel'
+      preLoaderRoute: typeof EditaisEditalIdPainelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/mudancas': {
+      id: '/editais/$editalId/mudancas'
+      path: '/editais/$editalId/mudancas'
+      fullPath: '/editais/$editalId/mudancas'
+      preLoaderRoute: typeof EditaisEditalIdMudancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/fonte-documental': {
+      id: '/editais/$editalId/fonte-documental'
+      path: '/editais/$editalId/fonte-documental'
+      fullPath: '/editais/$editalId/fonte-documental'
+      preLoaderRoute: typeof EditaisEditalIdFonteDocumentalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/documentos-normativos': {
+      id: '/editais/$editalId/documentos-normativos'
+      path: '/editais/$editalId/documentos-normativos'
+      fullPath: '/editais/$editalId/documentos-normativos'
+      preLoaderRoute: typeof EditaisEditalIdDocumentosNormativosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/custos': {
+      id: '/editais/$editalId/custos'
+      path: '/editais/$editalId/custos'
+      fullPath: '/editais/$editalId/custos'
+      preLoaderRoute: typeof EditaisEditalIdCustosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/configuracao': {
+      id: '/editais/$editalId/configuracao'
+      path: '/editais/$editalId/configuracao'
+      fullPath: '/editais/$editalId/configuracao'
+      preLoaderRoute: typeof EditaisEditalIdConfiguracaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/auditoria': {
+      id: '/editais/$editalId/auditoria'
+      path: '/editais/$editalId/auditoria'
+      fullPath: '/editais/$editalId/auditoria'
+      preLoaderRoute: typeof EditaisEditalIdAuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/proponentes/': {
+      id: '/editais/$editalId/proponentes/'
+      path: '/editais/$editalId/proponentes'
+      fullPath: '/editais/$editalId/proponentes/'
+      preLoaderRoute: typeof EditaisEditalIdProponentesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/proponentes/$applicationId': {
+      id: '/editais/$editalId/proponentes/$applicationId'
+      path: '/editais/$editalId/proponentes/$applicationId'
+      fullPath: '/editais/$editalId/proponentes/$applicationId'
+      preLoaderRoute: typeof EditaisEditalIdProponentesApplicationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/google/oauth/callback': {
@@ -243,20 +510,25 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MudancasRoute: MudancasRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  EditaisNovoRoute: EditaisNovoRoute,
   ProponentesIdRoute: ProponentesIdRoute,
+  EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
+  EditaisEditalIdAuditoriaRoute: EditaisEditalIdAuditoriaRoute,
+  EditaisEditalIdConfiguracaoRoute: EditaisEditalIdConfiguracaoRoute,
+  EditaisEditalIdCustosRoute: EditaisEditalIdCustosRoute,
+  EditaisEditalIdDocumentosNormativosRoute:
+    EditaisEditalIdDocumentosNormativosRoute,
+  EditaisEditalIdFonteDocumentalRoute: EditaisEditalIdFonteDocumentalRoute,
+  EditaisEditalIdMudancasRoute: EditaisEditalIdMudancasRoute,
+  EditaisEditalIdPainelRoute: EditaisEditalIdPainelRoute,
+  EditaisEditalIdProcessamentoRoute: EditaisEditalIdProcessamentoRoute,
+  EditaisEditalIdIndexRoute: EditaisEditalIdIndexRoute,
   ApiGoogleOauthCallbackRoute: ApiGoogleOauthCallbackRoute,
+  EditaisEditalIdProponentesApplicationIdRoute:
+    EditaisEditalIdProponentesApplicationIdRoute,
+  EditaisEditalIdProponentesIndexRoute: EditaisEditalIdProponentesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
