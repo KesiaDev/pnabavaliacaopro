@@ -4,12 +4,15 @@ import {
   LayoutDashboard,
   FolderSync,
   Users,
-  FileText,
   ShieldCheck,
   History,
   BookMarked,
   LogOut,
   Search,
+  Cpu,
+  Coins,
+  SlidersHorizontal,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -17,19 +20,23 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrentProfile, useCurrentRoles } from "@/lib/queries/current-user";
 import { ROLE_LABEL } from "@/lib/mock-data";
+import { EditalSwitcher } from "@/components/edital-switcher";
+import { useEditalContext } from "@/contexts/edital-context";
 
 const NAV: Array<{
-  to: string;
+  path: string;
   label: string;
   icon: typeof LayoutDashboard;
-  badge?: string;
 }> = [
-  { to: "/", label: "Painel", icon: LayoutDashboard },
-  { to: "/fonte-documental", label: "Fonte documental", icon: FolderSync },
-  { to: "/proponentes", label: "Proponentes", icon: Users, badge: "8" },
-  { to: "/mudancas", label: "Mudanças", icon: History, badge: "5" },
-  { to: "/auditoria", label: "Auditoria", icon: ShieldCheck },
-  { to: "/documentos-normativos", label: "Documentos normativos", icon: BookMarked },
+  { path: "/painel", label: "Painel", icon: LayoutDashboard },
+  { path: "/fonte-documental", label: "Fonte documental", icon: FolderSync },
+  { path: "/proponentes", label: "Proponentes", icon: Users },
+  { path: "/processamento", label: "Processamento", icon: Cpu },
+  { path: "/mudancas", label: "Mudanças", icon: History },
+  { path: "/auditoria", label: "Auditoria", icon: ShieldCheck },
+  { path: "/custos", label: "Custos", icon: Coins },
+  { path: "/documentos-normativos", label: "Documentos normativos", icon: BookMarked },
+  { path: "/configuracao", label: "Configuração", icon: SlidersHorizontal },
 ];
 
 export function AppShell({
