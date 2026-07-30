@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
 import { Route as EditaisIndexRouteImport } from './routes/editais/index'
 import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
+import { Route as EditaisNovoRouteImport } from './routes/editais/novo'
 import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
 import { Route as EditaisEditalIdProcessamentoRouteImport } from './routes/editais/$editalId/processamento'
 import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
@@ -80,6 +81,11 @@ const EditaisIndexRoute = EditaisIndexRouteImport.update({
 const ProponentesIdRoute = ProponentesIdRouteImport.update({
   id: '/proponentes/$id',
   path: '/proponentes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisNovoRoute = EditaisNovoRouteImport.update({
+  id: '/editais/novo',
+  path: '/editais/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditaisEditalIdIndexRoute = EditaisEditalIdIndexRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/editais/novo': typeof EditaisNovoRoute
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
     | '/editais'
     | '/proponentes'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mudancas'
     | '/reset-password'
+    | '/editais/novo'
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
@@ -306,6 +318,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MudancasRoute: typeof MudancasRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  EditaisNovoRoute: typeof EditaisNovoRoute
   ProponentesIdRoute: typeof ProponentesIdRoute
   EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/proponentes/$id'
       fullPath: '/proponentes/$id'
       preLoaderRoute: typeof ProponentesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/novo': {
+      id: '/editais/novo'
+      path: '/editais/novo'
+      fullPath: '/editais/novo'
+      preLoaderRoute: typeof EditaisNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/': {
@@ -490,6 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MudancasRoute: MudancasRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  EditaisNovoRoute: EditaisNovoRoute,
   ProponentesIdRoute: ProponentesIdRoute,
   EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
