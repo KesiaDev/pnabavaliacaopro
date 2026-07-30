@@ -167,9 +167,8 @@ export function AppShell({
           <span className="font-mono">Revisão humana obrigatória</span>
         </footer>
       </div>
-
-      </div>
     </div>
+
   );
 }
 
