@@ -21,7 +21,10 @@ import { Route as EditaisIndexRouteImport } from './routes/editais/index'
 import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
 import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
 import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
+import { Route as EditaisEditalIdMudancasRouteImport } from './routes/editais/$editalId/mudancas'
 import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
+import { Route as EditaisEditalIdDocumentosNormativosRouteImport } from './routes/editais/$editalId/documentos-normativos'
+import { Route as EditaisEditalIdAuditoriaRouteImport } from './routes/editais/$editalId/auditoria'
 import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
 import { Route as EditaisEditalIdProponentesApplicationIdRouteImport } from './routes/editais/$editalId/proponentes/$applicationId'
 import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
@@ -86,10 +89,27 @@ const EditaisEditalIdPainelRoute = EditaisEditalIdPainelRouteImport.update({
   path: '/editais/$editalId/painel',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditaisEditalIdMudancasRoute = EditaisEditalIdMudancasRouteImport.update({
+  id: '/editais/$editalId/mudancas',
+  path: '/editais/$editalId/mudancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EditaisEditalIdFonteDocumentalRoute =
   EditaisEditalIdFonteDocumentalRouteImport.update({
     id: '/editais/$editalId/fonte-documental',
     path: '/editais/$editalId/fonte-documental',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdDocumentosNormativosRoute =
+  EditaisEditalIdDocumentosNormativosRouteImport.update({
+    id: '/editais/$editalId/documentos-normativos',
+    path: '/editais/$editalId/documentos-normativos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdAuditoriaRoute =
+  EditaisEditalIdAuditoriaRouteImport.update({
+    id: '/editais/$editalId/auditoria',
+    path: '/editais/$editalId/auditoria',
     getParentRoute: () => rootRouteImport,
   } as any)
 const EditaisEditalIdProponentesIndexRoute =
@@ -121,7 +141,10 @@ export interface FileRoutesByFullPath {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
@@ -139,7 +162,10 @@ export interface FileRoutesByTo {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
@@ -158,7 +184,10 @@ export interface FileRoutesById {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
+  '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
@@ -178,7 +207,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
     | '/editais/$editalId/painel'
     | '/editais/$editalId/'
     | '/api/google/oauth/callback'
@@ -196,7 +228,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais'
     | '/proponentes'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
     | '/editais/$editalId/painel'
     | '/editais/$editalId'
     | '/api/google/oauth/callback'
@@ -214,7 +249,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
+    | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
+    | '/editais/$editalId/mudancas'
     | '/editais/$editalId/painel'
     | '/editais/$editalId/'
     | '/api/google/oauth/callback'
@@ -233,7 +271,10 @@ export interface RootRouteChildren {
   ProponentesIdRoute: typeof ProponentesIdRoute
   EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
+  EditaisEditalIdAuditoriaRoute: typeof EditaisEditalIdAuditoriaRoute
+  EditaisEditalIdDocumentosNormativosRoute: typeof EditaisEditalIdDocumentosNormativosRoute
   EditaisEditalIdFonteDocumentalRoute: typeof EditaisEditalIdFonteDocumentalRoute
+  EditaisEditalIdMudancasRoute: typeof EditaisEditalIdMudancasRoute
   EditaisEditalIdPainelRoute: typeof EditaisEditalIdPainelRoute
   EditaisEditalIdIndexRoute: typeof EditaisEditalIdIndexRoute
   ApiGoogleOauthCallbackRoute: typeof ApiGoogleOauthCallbackRoute
@@ -327,11 +368,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdPainelRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editais/$editalId/mudancas': {
+      id: '/editais/$editalId/mudancas'
+      path: '/editais/$editalId/mudancas'
+      fullPath: '/editais/$editalId/mudancas'
+      preLoaderRoute: typeof EditaisEditalIdMudancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/editais/$editalId/fonte-documental': {
       id: '/editais/$editalId/fonte-documental'
       path: '/editais/$editalId/fonte-documental'
       fullPath: '/editais/$editalId/fonte-documental'
       preLoaderRoute: typeof EditaisEditalIdFonteDocumentalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/documentos-normativos': {
+      id: '/editais/$editalId/documentos-normativos'
+      path: '/editais/$editalId/documentos-normativos'
+      fullPath: '/editais/$editalId/documentos-normativos'
+      preLoaderRoute: typeof EditaisEditalIdDocumentosNormativosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/auditoria': {
+      id: '/editais/$editalId/auditoria'
+      path: '/editais/$editalId/auditoria'
+      fullPath: '/editais/$editalId/auditoria'
+      preLoaderRoute: typeof EditaisEditalIdAuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/proponentes/': {
@@ -369,7 +431,11 @@ const rootRouteChildren: RootRouteChildren = {
   ProponentesIdRoute: ProponentesIdRoute,
   EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
+  EditaisEditalIdAuditoriaRoute: EditaisEditalIdAuditoriaRoute,
+  EditaisEditalIdDocumentosNormativosRoute:
+    EditaisEditalIdDocumentosNormativosRoute,
   EditaisEditalIdFonteDocumentalRoute: EditaisEditalIdFonteDocumentalRoute,
+  EditaisEditalIdMudancasRoute: EditaisEditalIdMudancasRoute,
   EditaisEditalIdPainelRoute: EditaisEditalIdPainelRoute,
   EditaisEditalIdIndexRoute: EditaisEditalIdIndexRoute,
   ApiGoogleOauthCallbackRoute: ApiGoogleOauthCallbackRoute,
