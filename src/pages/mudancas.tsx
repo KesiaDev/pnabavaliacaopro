@@ -1,13 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  useActiveDriveConnection,
-  useDriveSource,
-  useRecentSyncChanges,
-  useRunSync,
-} from "@/lib/queries/drive";
-
+import { useDriveSource, useRecentSyncChanges, useRunSync } from "@/lib/queries/drive";
 
 const LABEL: Record<string, string> = {
   novo_proponente: "Novo proponente",
@@ -19,11 +13,10 @@ const LABEL: Record<string, string> = {
   acesso_revogado: "Acesso revogado",
 };
 
-export function Mudancas() {
-  const { data: connection } = useActiveDriveConnection();
-  const { data: source } = useDriveSource(connection?.id);
+export function Mudancas({ editalId }: { editalId?: string }) {
+  const { data: source } = useDriveSource(editalId);
   const { data: changes, isLoading } = useRecentSyncChanges();
-  const runSync = useRunSync();
+  const runSync = useRunSync(editalId);
 
   return (
     <AppShell
@@ -33,7 +26,7 @@ export function Mudancas() {
         <Button
           size="sm"
           disabled={!source || runSync.isPending}
-          onClick={() => source && runSync.mutate(source.id)}
+          onClick={() => source && runSync.mutate()}
         >
           {runSync.isPending ? "Sincronizando…" : "Sincronizar agora"}
         </Button>

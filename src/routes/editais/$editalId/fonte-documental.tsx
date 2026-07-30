@@ -33,5 +33,6 @@ export const Route = createFileRoute("/editais/$editalId/fonte-documental")({
 
 function FonteDocumentalRoute() {
   const search = Route.useSearch();
-  return <FonteDocumental search={search} />;
+  const { editalId } = Route.useParams();
+  return <FonteDocumental search={search} editalId={editalId} />;
 }

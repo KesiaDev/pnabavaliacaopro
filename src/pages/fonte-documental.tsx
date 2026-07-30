@@ -23,7 +23,6 @@ interface FonteSearch {
   google_error_detail?: string;
 }
 
-
 const ERROR_LABEL: Record<string, string> = {
   missing_code: "O Google não retornou um código de autorização.",
   unauthorized: "Sua conta não tem papel de administradora — conexão recusada.",
@@ -34,15 +33,15 @@ const ERROR_LABEL: Record<string, string> = {
   unexpected: "Erro inesperado durante a conexão.",
 };
 
-export function FonteDocumental({ search }: { search: FonteSearch }) {
+export function FonteDocumental({ search, editalId }: { search: FonteSearch; editalId?: string }) {
   const { data: connection, isLoading: loadingConnection } = useActiveDriveConnection();
-  const { data: source } = useDriveSource(connection?.id);
+  const { data: source } = useDriveSource(editalId);
   const { data: latestRun } = useLatestSyncRun(source?.id);
-  const startOAuth = useStartGoogleOAuth();
+  const startOAuth = useStartGoogleOAuth(editalId);
   const disconnect = useDisconnectGoogle();
-  const saveSource = useSaveDriveSource();
-  const runBaseline = useRunBaseline();
-  const runSync = useRunSync();
+  const saveSource = useSaveDriveSource(editalId);
+  const runBaseline = useRunBaseline(editalId);
+  const runSync = useRunSync(editalId);
 
   const [folderInput, setFolderInput] = useState("");
   const [changingFolder, setChangingFolder] = useState(false);
@@ -159,15 +158,12 @@ export function FonteDocumental({ search }: { search: FonteSearch }) {
                         variant="outline"
                         disabled={!folderInput || saveSource.isPending}
                         onClick={() =>
-                          saveSource.mutate(
-                            { connectionId: connection.id, folderUrlOrId: folderInput },
-                            {
-                              onSuccess: () => {
-                                setChangingFolder(false);
-                                setFolderInput("");
-                              },
+                          saveSource.mutate(folderInput, {
+                            onSuccess: () => {
+                              setChangingFolder(false);
+                              setFolderInput("");
                             },
-                          )
+                          })
                         }
                       >
                         Salvar pasta
@@ -188,10 +184,7 @@ export function FonteDocumental({ search }: { search: FonteSearch }) {
 
               {source && (
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <Button
-                    disabled={runBaseline.isPending}
-                    onClick={() => runBaseline.mutate(source.id)}
-                  >
+                  <Button disabled={runBaseline.isPending} onClick={() => runBaseline.mutate()}>
                     {runBaseline.isPending
                       ? "Criando baseline…"
                       : "Criar nova fotografia (baseline)"}
@@ -199,7 +192,7 @@ export function FonteDocumental({ search }: { search: FonteSearch }) {
                   <Button
                     variant="outline"
                     disabled={runSync.isPending}
-                    onClick={() => runSync.mutate(source.id)}
+                    onClick={() => runSync.mutate()}
                   >
                     {runSync.isPending ? "Sincronizando…" : "Sincronizar agora"}
                   </Button>

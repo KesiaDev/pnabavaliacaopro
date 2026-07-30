@@ -20,7 +20,10 @@ import { Route as EditaisIndexRouteImport } from './routes/editais/index'
 import { Route as EditaisNovoRouteImport } from './routes/editais/novo'
 import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
 import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
+import { Route as ApiInternalDriveConnectionsRouteImport } from './routes/api/internal/drive-connections'
+import { Route as ApiInternalDriveSourcesRouteImport } from './routes/api/internal/drive-sources'
 import { Route as ApiInternalJobsRouteImport } from './routes/api/internal/jobs'
+import { Route as ApiInternalSyncRunsRouteImport } from './routes/api/internal/sync-runs'
 import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
 import { Route as EditaisEditalIdAuditoriaRouteImport } from './routes/editais/$editalId/auditoria'
 import { Route as EditaisEditalIdConfiguracaoRouteImport } from './routes/editais/$editalId/configuracao'
@@ -33,6 +36,7 @@ import { Route as EditaisEditalIdProcessamentoRouteImport } from './routes/edita
 import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
 import { Route as EditaisEditalIdProponentesApplicationIdRouteImport } from './routes/editais/$editalId/proponentes/$applicationId'
+import { Route as ApiInternalSyncRunsSyncRunIdFinishRouteImport } from './routes/api/internal/sync-runs/$syncRunId/finish'
 import { Route as ApiInternalJobsJobIdStagesStageRouteImport } from './routes/api/internal/jobs/$jobId/stages/$stage'
 
 const IndexRoute = IndexRouteImport.update({
@@ -90,9 +94,25 @@ const ProponentesIdRoute = ProponentesIdRouteImport.update({
   path: '/proponentes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalDriveConnectionsRoute =
+  ApiInternalDriveConnectionsRouteImport.update({
+    id: '/api/internal/drive-connections',
+    path: '/api/internal/drive-connections',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiInternalDriveSourcesRoute = ApiInternalDriveSourcesRouteImport.update({
+  id: '/api/internal/drive-sources',
+  path: '/api/internal/drive-sources',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInternalJobsRoute = ApiInternalJobsRouteImport.update({
   id: '/api/internal/jobs',
   path: '/api/internal/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalSyncRunsRoute = ApiInternalSyncRunsRouteImport.update({
+  id: '/api/internal/sync-runs',
+  path: '/api/internal/sync-runs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditaisEditalIdIndexRoute = EditaisEditalIdIndexRouteImport.update({
@@ -162,6 +182,12 @@ const EditaisEditalIdProponentesApplicationIdRoute =
     path: '/editais/$editalId/proponentes/$applicationId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInternalSyncRunsSyncRunIdFinishRoute =
+  ApiInternalSyncRunsSyncRunIdFinishRouteImport.update({
+    id: '/$syncRunId/finish',
+    path: '/$syncRunId/finish',
+    getParentRoute: () => ApiInternalSyncRunsRoute,
+  } as any)
 const ApiInternalJobsJobIdStagesStageRoute =
   ApiInternalJobsJobIdStagesStageRouteImport.update({
     id: '/$jobId/stages/$stage',
@@ -181,7 +207,10 @@ export interface FileRoutesByFullPath {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/api/internal/drive-connections': typeof ApiInternalDriveConnectionsRoute
+  '/api/internal/drive-sources': typeof ApiInternalDriveSourcesRoute
   '/api/internal/jobs': typeof ApiInternalJobsRouteWithChildren
+  '/api/internal/sync-runs': typeof ApiInternalSyncRunsRouteWithChildren
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
   '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
   '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
@@ -194,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
   '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
   '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
+  '/api/internal/sync-runs/$syncRunId/finish': typeof ApiInternalSyncRunsSyncRunIdFinishRoute
   '/api/internal/jobs/$jobId/stages/$stage': typeof ApiInternalJobsJobIdStagesStageRoute
 }
 export interface FileRoutesByTo {
@@ -208,7 +238,10 @@ export interface FileRoutesByTo {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
+  '/api/internal/drive-connections': typeof ApiInternalDriveConnectionsRoute
+  '/api/internal/drive-sources': typeof ApiInternalDriveSourcesRoute
   '/api/internal/jobs': typeof ApiInternalJobsRouteWithChildren
+  '/api/internal/sync-runs': typeof ApiInternalSyncRunsRouteWithChildren
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
   '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
   '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
@@ -221,6 +254,7 @@ export interface FileRoutesByTo {
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
   '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
   '/editais/$editalId/proponentes': typeof EditaisEditalIdProponentesIndexRoute
+  '/api/internal/sync-runs/$syncRunId/finish': typeof ApiInternalSyncRunsSyncRunIdFinishRoute
   '/api/internal/jobs/$jobId/stages/$stage': typeof ApiInternalJobsJobIdStagesStageRoute
 }
 export interface FileRoutesById {
@@ -236,7 +270,10 @@ export interface FileRoutesById {
   '/proponentes/$id': typeof ProponentesIdRoute
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
+  '/api/internal/drive-connections': typeof ApiInternalDriveConnectionsRoute
+  '/api/internal/drive-sources': typeof ApiInternalDriveSourcesRoute
   '/api/internal/jobs': typeof ApiInternalJobsRouteWithChildren
+  '/api/internal/sync-runs': typeof ApiInternalSyncRunsRouteWithChildren
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
   '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
   '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
@@ -249,6 +286,7 @@ export interface FileRoutesById {
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
   '/editais/$editalId/proponentes/$applicationId': typeof EditaisEditalIdProponentesApplicationIdRoute
   '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
+  '/api/internal/sync-runs/$syncRunId/finish': typeof ApiInternalSyncRunsSyncRunIdFinishRoute
   '/api/internal/jobs/$jobId/stages/$stage': typeof ApiInternalJobsJobIdStagesStageRoute
 }
 export interface FileRouteTypes {
@@ -265,7 +303,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
+    | '/api/internal/drive-connections'
+    | '/api/internal/drive-sources'
     | '/api/internal/jobs'
+    | '/api/internal/sync-runs'
     | '/editais/$editalId/auditoria'
     | '/editais/$editalId/configuracao'
     | '/editais/$editalId/custos'
@@ -278,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/google/oauth/callback'
     | '/editais/$editalId/proponentes/$applicationId'
     | '/editais/$editalId/proponentes/'
+    | '/api/internal/sync-runs/$syncRunId/finish'
     | '/api/internal/jobs/$jobId/stages/$stage'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -292,7 +334,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais'
     | '/proponentes'
+    | '/api/internal/drive-connections'
+    | '/api/internal/drive-sources'
     | '/api/internal/jobs'
+    | '/api/internal/sync-runs'
     | '/editais/$editalId/auditoria'
     | '/editais/$editalId/configuracao'
     | '/editais/$editalId/custos'
@@ -305,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/google/oauth/callback'
     | '/editais/$editalId/proponentes/$applicationId'
     | '/editais/$editalId/proponentes'
+    | '/api/internal/sync-runs/$syncRunId/finish'
     | '/api/internal/jobs/$jobId/stages/$stage'
   id:
     | '__root__'
@@ -319,7 +365,10 @@ export interface FileRouteTypes {
     | '/proponentes/$id'
     | '/editais/'
     | '/proponentes/'
+    | '/api/internal/drive-connections'
+    | '/api/internal/drive-sources'
     | '/api/internal/jobs'
+    | '/api/internal/sync-runs'
     | '/editais/$editalId/auditoria'
     | '/editais/$editalId/configuracao'
     | '/editais/$editalId/custos'
@@ -332,6 +381,7 @@ export interface FileRouteTypes {
     | '/api/google/oauth/callback'
     | '/editais/$editalId/proponentes/$applicationId'
     | '/editais/$editalId/proponentes/'
+    | '/api/internal/sync-runs/$syncRunId/finish'
     | '/api/internal/jobs/$jobId/stages/$stage'
   fileRoutesById: FileRoutesById
 }
@@ -347,7 +397,10 @@ export interface RootRouteChildren {
   ProponentesIdRoute: typeof ProponentesIdRoute
   EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
+  ApiInternalDriveConnectionsRoute: typeof ApiInternalDriveConnectionsRoute
+  ApiInternalDriveSourcesRoute: typeof ApiInternalDriveSourcesRoute
   ApiInternalJobsRoute: typeof ApiInternalJobsRouteWithChildren
+  ApiInternalSyncRunsRoute: typeof ApiInternalSyncRunsRouteWithChildren
   EditaisEditalIdAuditoriaRoute: typeof EditaisEditalIdAuditoriaRoute
   EditaisEditalIdConfiguracaoRoute: typeof EditaisEditalIdConfiguracaoRoute
   EditaisEditalIdCustosRoute: typeof EditaisEditalIdCustosRoute
@@ -441,11 +494,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProponentesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/drive-connections': {
+      id: '/api/internal/drive-connections'
+      path: '/api/internal/drive-connections'
+      fullPath: '/api/internal/drive-connections'
+      preLoaderRoute: typeof ApiInternalDriveConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/drive-sources': {
+      id: '/api/internal/drive-sources'
+      path: '/api/internal/drive-sources'
+      fullPath: '/api/internal/drive-sources'
+      preLoaderRoute: typeof ApiInternalDriveSourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/jobs': {
       id: '/api/internal/jobs'
       path: '/api/internal/jobs'
       fullPath: '/api/internal/jobs'
       preLoaderRoute: typeof ApiInternalJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/sync-runs': {
+      id: '/api/internal/sync-runs'
+      path: '/api/internal/sync-runs'
+      fullPath: '/api/internal/sync-runs'
+      preLoaderRoute: typeof ApiInternalSyncRunsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/': {
@@ -532,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdProponentesApplicationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/sync-runs/$syncRunId/finish': {
+      id: '/api/internal/sync-runs/$syncRunId/finish'
+      path: '/$syncRunId/finish'
+      fullPath: '/api/internal/sync-runs/$syncRunId/finish'
+      preLoaderRoute: typeof ApiInternalSyncRunsSyncRunIdFinishRouteImport
+      parentRoute: typeof ApiInternalSyncRunsRoute
+    }
     '/api/internal/jobs/$jobId/stages/$stage': {
       id: '/api/internal/jobs/$jobId/stages/$stage'
       path: '/$jobId/stages/$stage'
@@ -554,6 +635,18 @@ const ApiInternalJobsRouteWithChildren = ApiInternalJobsRoute._addFileChildren(
   ApiInternalJobsRouteChildren,
 )
 
+interface ApiInternalSyncRunsRouteChildren {
+  ApiInternalSyncRunsSyncRunIdFinishRoute: typeof ApiInternalSyncRunsSyncRunIdFinishRoute
+}
+
+const ApiInternalSyncRunsRouteChildren: ApiInternalSyncRunsRouteChildren = {
+  ApiInternalSyncRunsSyncRunIdFinishRoute:
+    ApiInternalSyncRunsSyncRunIdFinishRoute,
+}
+
+const ApiInternalSyncRunsRouteWithChildren =
+  ApiInternalSyncRunsRoute._addFileChildren(ApiInternalSyncRunsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditoriaRoute: AuditoriaRoute,
@@ -566,7 +659,10 @@ const rootRouteChildren: RootRouteChildren = {
   ProponentesIdRoute: ProponentesIdRoute,
   EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
+  ApiInternalDriveConnectionsRoute: ApiInternalDriveConnectionsRoute,
+  ApiInternalDriveSourcesRoute: ApiInternalDriveSourcesRoute,
   ApiInternalJobsRoute: ApiInternalJobsRouteWithChildren,
+  ApiInternalSyncRunsRoute: ApiInternalSyncRunsRouteWithChildren,
   EditaisEditalIdAuditoriaRoute: EditaisEditalIdAuditoriaRoute,
   EditaisEditalIdConfiguracaoRoute: EditaisEditalIdConfiguracaoRoute,
   EditaisEditalIdCustosRoute: EditaisEditalIdCustosRoute,

@@ -16,5 +16,10 @@ export const Route = createFileRoute("/editais/$editalId/mudancas")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: Mudancas,
+  component: MudancasRoute,
 });
+
+function MudancasRoute() {
+  const { editalId } = Route.useParams();
+  return <Mudancas editalId={editalId} />;
+}
