@@ -25,6 +25,8 @@ import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$edi
 import { Route as EditaisEditalIdMudancasRouteImport } from './routes/editais/$editalId/mudancas'
 import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
 import { Route as EditaisEditalIdDocumentosNormativosRouteImport } from './routes/editais/$editalId/documentos-normativos'
+import { Route as EditaisEditalIdCustosRouteImport } from './routes/editais/$editalId/custos'
+import { Route as EditaisEditalIdConfiguracaoRouteImport } from './routes/editais/$editalId/configuracao'
 import { Route as EditaisEditalIdAuditoriaRouteImport } from './routes/editais/$editalId/auditoria'
 import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
 import { Route as EditaisEditalIdProponentesApplicationIdRouteImport } from './routes/editais/$editalId/proponentes/$applicationId'
@@ -113,6 +115,17 @@ const EditaisEditalIdDocumentosNormativosRoute =
     path: '/editais/$editalId/documentos-normativos',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EditaisEditalIdCustosRoute = EditaisEditalIdCustosRouteImport.update({
+  id: '/editais/$editalId/custos',
+  path: '/editais/$editalId/custos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdConfiguracaoRoute =
+  EditaisEditalIdConfiguracaoRouteImport.update({
+    id: '/editais/$editalId/configuracao',
+    path: '/editais/$editalId/configuracao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EditaisEditalIdAuditoriaRoute =
   EditaisEditalIdAuditoriaRouteImport.update({
     id: '/editais/$editalId/auditoria',
@@ -149,6 +162,8 @@ export interface FileRoutesByFullPath {
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
   '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
   '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
@@ -171,6 +186,8 @@ export interface FileRoutesByTo {
   '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
   '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
   '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
@@ -194,6 +211,8 @@ export interface FileRoutesById {
   '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
   '/editais/$editalId/auditoria': typeof EditaisEditalIdAuditoriaRoute
+  '/editais/$editalId/configuracao': typeof EditaisEditalIdConfiguracaoRoute
+  '/editais/$editalId/custos': typeof EditaisEditalIdCustosRoute
   '/editais/$editalId/documentos-normativos': typeof EditaisEditalIdDocumentosNormativosRoute
   '/editais/$editalId/fonte-documental': typeof EditaisEditalIdFonteDocumentalRoute
   '/editais/$editalId/mudancas': typeof EditaisEditalIdMudancasRoute
@@ -218,6 +237,8 @@ export interface FileRouteTypes {
     | '/editais/'
     | '/proponentes/'
     | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
     | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
     | '/editais/$editalId/mudancas'
@@ -240,6 +261,8 @@ export interface FileRouteTypes {
     | '/editais'
     | '/proponentes'
     | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
     | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
     | '/editais/$editalId/mudancas'
@@ -262,6 +285,8 @@ export interface FileRouteTypes {
     | '/editais/'
     | '/proponentes/'
     | '/editais/$editalId/auditoria'
+    | '/editais/$editalId/configuracao'
+    | '/editais/$editalId/custos'
     | '/editais/$editalId/documentos-normativos'
     | '/editais/$editalId/fonte-documental'
     | '/editais/$editalId/mudancas'
@@ -285,6 +310,8 @@ export interface RootRouteChildren {
   EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
   EditaisEditalIdAuditoriaRoute: typeof EditaisEditalIdAuditoriaRoute
+  EditaisEditalIdConfiguracaoRoute: typeof EditaisEditalIdConfiguracaoRoute
+  EditaisEditalIdCustosRoute: typeof EditaisEditalIdCustosRoute
   EditaisEditalIdDocumentosNormativosRoute: typeof EditaisEditalIdDocumentosNormativosRoute
   EditaisEditalIdFonteDocumentalRoute: typeof EditaisEditalIdFonteDocumentalRoute
   EditaisEditalIdMudancasRoute: typeof EditaisEditalIdMudancasRoute
@@ -410,6 +437,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdDocumentosNormativosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editais/$editalId/custos': {
+      id: '/editais/$editalId/custos'
+      path: '/editais/$editalId/custos'
+      fullPath: '/editais/$editalId/custos'
+      preLoaderRoute: typeof EditaisEditalIdCustosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/configuracao': {
+      id: '/editais/$editalId/configuracao'
+      path: '/editais/$editalId/configuracao'
+      fullPath: '/editais/$editalId/configuracao'
+      preLoaderRoute: typeof EditaisEditalIdConfiguracaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/editais/$editalId/auditoria': {
       id: '/editais/$editalId/auditoria'
       path: '/editais/$editalId/auditoria'
@@ -453,6 +494,8 @@ const rootRouteChildren: RootRouteChildren = {
   EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
   EditaisEditalIdAuditoriaRoute: EditaisEditalIdAuditoriaRoute,
+  EditaisEditalIdConfiguracaoRoute: EditaisEditalIdConfiguracaoRoute,
+  EditaisEditalIdCustosRoute: EditaisEditalIdCustosRoute,
   EditaisEditalIdDocumentosNormativosRoute:
     EditaisEditalIdDocumentosNormativosRoute,
   EditaisEditalIdFonteDocumentalRoute: EditaisEditalIdFonteDocumentalRoute,
