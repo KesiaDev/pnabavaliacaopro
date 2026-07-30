@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEditalContext } from "@/contexts/edital-context";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,8 @@ const CRITERION_LABEL: Record<string, string> = {
 };
 
 export function ProponentDetail({ id }: { id: string }) {
+  const { editalId } = useEditalContext();
+  const base = `/editais/${editalId}`;
   const { data: p, isLoading } = useProponent(id);
   const { data: scores } = useCriterionScores(id);
   const updateScore = useUpdateCriterionScore(id);
@@ -94,7 +97,7 @@ export function ProponentDetail({ id }: { id: string }) {
   if (!p) {
     return (
       <AppShell title="Proponente não encontrado">
-        <Link to={"/proponentes" as string} className="text-primary hover:underline">
+        <Link to={`${base}/proponentes` as string} className="text-primary hover:underline">
           ← voltar
         </Link>
       </AppShell>
@@ -108,7 +111,7 @@ export function ProponentDetail({ id }: { id: string }) {
       actions={
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link to={"/proponentes" as string}>
+            <Link to={`${base}/proponentes` as string}>
               <ChevronLeft className="w-4 h-4 mr-1" /> voltar
             </Link>
           </Button>

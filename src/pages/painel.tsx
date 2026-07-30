@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEditalContext } from "@/contexts/edital-context";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ import {
 
 
 export function Dashboard() {
+  const { editalId } = useEditalContext();
+  const base = `/editais/${editalId}`;
   const { data: proponents, isLoading } = useProponents();
   const list = proponents ?? [];
 
@@ -34,7 +37,7 @@ export function Dashboard() {
       subtitle="Visão geral dos dossiês distribuídos, pendências humanas e mudanças recentes na fonte."
       actions={
         <Button asChild>
-          <Link to={"/fonte-documental" as string}>Sincronizar Drive</Link>
+          <Link to={`${base}/fonte-documental` as string}>Sincronizar Drive</Link>
         </Button>
       }
     >
@@ -70,7 +73,7 @@ export function Dashboard() {
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <CardTitle className="font-serif text-lg">Fila de trabalho</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to={"/proponentes" as string} className="text-xs">
+                  <Link to={`${base}/proponentes` as string} className="text-xs">
                     Ver todos <ArrowRight className="w-3 h-3 ml-1" />
                   </Link>
                 </Button>
@@ -85,8 +88,7 @@ export function Dashboard() {
                     {list.slice(0, 6).map((p) => (
                       <Link
                         key={p.id}
-                        to={"/proponentes/$id" as string}
-                        params={{ id: p.id }}
+                        to={`${base}/proponentes/${p.id}` as string}
                         className="flex items-center gap-4 px-6 py-3.5 hover:bg-secondary/40 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
@@ -129,7 +131,7 @@ export function Dashboard() {
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <CardTitle className="font-serif text-lg">Mudanças recentes</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to={"/mudancas" as string} className="text-xs">
+                  <Link to={`${base}/mudancas` as string} className="text-xs">
                     Detalhes <ArrowRight className="w-3 h-3 ml-1" />
                   </Link>
                 </Button>

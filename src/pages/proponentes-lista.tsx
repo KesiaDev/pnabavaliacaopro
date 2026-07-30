@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEditalContext } from "@/contexts/edital-context";
 import { useState, type FormEvent } from "react";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
@@ -37,6 +38,8 @@ import { Search, ShieldAlert, Trash2 } from "lucide-react";
 
 
 export function ProponentesList() {
+  const { editalId } = useEditalContext();
+  const base = `/editais/${editalId}`;
   const { data: proponents, isLoading } = useProponents();
   const list = proponents ?? [];
   const [filter, setFilter] = useState("");
@@ -98,8 +101,7 @@ export function ProponentesList() {
                 <tr key={p.id} className="hover:bg-secondary/30 transition-colors">
                   <td className="px-4 py-3">
                     <Link
-                      to={"/proponentes/$id" as string}
-                      params={{ id: p.id }}
+                      to={`${base}/proponentes/${p.id}` as string}
                       className="font-medium hover:underline"
                     >
                       {p.nome_canonico}
