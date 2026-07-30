@@ -129,11 +129,66 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_entries: {
+        Row: {
+          cached_tokens: number
+          cost: number
+          created_at: string
+          edital_id: string
+          id: string
+          input_tokens: number
+          model: string
+          output_tokens: number
+          proponent_id: string | null
+          stage: string
+        }
+        Insert: {
+          cached_tokens?: number
+          cost?: number
+          created_at?: string
+          edital_id: string
+          id?: string
+          input_tokens?: number
+          model: string
+          output_tokens?: number
+          proponent_id?: string | null
+          stage: string
+        }
+        Update: {
+          cached_tokens?: number
+          cost?: number
+          created_at?: string
+          edital_id?: string
+          id?: string
+          input_tokens?: number
+          model?: string
+          output_tokens?: number
+          proponent_id?: string | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_entries_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_entries_proponent_id_fkey"
+            columns: ["proponent_id"]
+            isOneToOne: false
+            referencedRelation: "proponents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       criterion_scores: {
         Row: {
           applied_band: string | null
           approved_score: number | null
           criterion: string
+          edital_id: string | null
           human_review_required: boolean
           id: string
           justification: string | null
@@ -146,6 +201,7 @@ export type Database = {
           applied_band?: string | null
           approved_score?: number | null
           criterion: string
+          edital_id?: string | null
           human_review_required?: boolean
           id?: string
           justification?: string | null
@@ -158,6 +214,7 @@ export type Database = {
           applied_band?: string | null
           approved_score?: number | null
           criterion?: string
+          edital_id?: string | null
           human_review_required?: boolean
           id?: string
           justification?: string | null
@@ -167,6 +224,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "criterion_scores_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "criterion_scores_proponent_id_fkey"
             columns: ["proponent_id"]
@@ -283,6 +347,7 @@ export type Database = {
           connection_id: string
           created_at: string
           drive_folder_id: string
+          edital_id: string | null
           folder_name: string | null
           id: string
           periodic_sync_enabled: boolean
@@ -291,6 +356,7 @@ export type Database = {
           connection_id: string
           created_at?: string
           drive_folder_id: string
+          edital_id?: string | null
           folder_name?: string | null
           id?: string
           periodic_sync_enabled?: boolean
@@ -299,6 +365,7 @@ export type Database = {
           connection_id?: string
           created_at?: string
           drive_folder_id?: string
+          edital_id?: string | null
           folder_name?: string | null
           id?: string
           periodic_sync_enabled?: boolean
@@ -311,11 +378,306 @@ export type Database = {
             referencedRelation: "drive_connections"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "drive_sources_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      editais: {
+        Row: {
+          closed_at: string | null
+          closed_reason: string | null
+          created_at: string
+          created_by: string | null
+          cycle: string | null
+          drive_source_id: string | null
+          id: string
+          max_individual_score: number
+          name: string
+          normative_version_id: string | null
+          number: string
+          organ: string | null
+          reopened_reason: string | null
+          status: Database["public"]["Enums"]["edital_status"]
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          cycle?: string | null
+          drive_source_id?: string | null
+          id?: string
+          max_individual_score?: number
+          name: string
+          normative_version_id?: string | null
+          number: string
+          organ?: string | null
+          reopened_reason?: string | null
+          status?: Database["public"]["Enums"]["edital_status"]
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          closed_at?: string | null
+          closed_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          cycle?: string | null
+          drive_source_id?: string | null
+          id?: string
+          max_individual_score?: number
+          name?: string
+          normative_version_id?: string | null
+          number?: string
+          organ?: string | null
+          reopened_reason?: string | null
+          status?: Database["public"]["Enums"]["edital_status"]
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editais_drive_source_id_fkey"
+            columns: ["drive_source_id"]
+            isOneToOne: false
+            referencedRelation: "drive_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edital_categories: {
+        Row: {
+          created_at: string
+          edital_id: string
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          edital_id: string
+          id?: string
+          name: string
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          edital_id?: string
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edital_categories_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edital_costs: {
+        Row: {
+          alert_50_sent: boolean
+          alert_75_sent: boolean
+          alert_90_sent: boolean
+          block_on_exceed: boolean
+          budget_total: number
+          edital_id: string
+          id: string
+          limit_per_application: number
+          updated_at: string
+        }
+        Insert: {
+          alert_50_sent?: boolean
+          alert_75_sent?: boolean
+          alert_90_sent?: boolean
+          block_on_exceed?: boolean
+          budget_total?: number
+          edital_id: string
+          id?: string
+          limit_per_application?: number
+          updated_at?: string
+        }
+        Update: {
+          alert_50_sent?: boolean
+          alert_75_sent?: boolean
+          alert_90_sent?: boolean
+          block_on_exceed?: boolean
+          budget_total?: number
+          edital_id?: string
+          id?: string
+          limit_per_application?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edital_costs_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: true
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edital_criteria: {
+        Row: {
+          bonus: boolean
+          code: string
+          created_at: string
+          description: string
+          edital_id: string
+          eliminatory: boolean
+          evaluation_mode: Database["public"]["Enums"]["criterion_evaluation_mode"]
+          id: string
+          maximum_score: number
+          order_index: number
+          rubric: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bonus?: boolean
+          code: string
+          created_at?: string
+          description?: string
+          edital_id: string
+          eliminatory?: boolean
+          evaluation_mode?: Database["public"]["Enums"]["criterion_evaluation_mode"]
+          id?: string
+          maximum_score: number
+          order_index?: number
+          rubric?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bonus?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          edital_id?: string
+          eliminatory?: boolean
+          evaluation_mode?: Database["public"]["Enums"]["criterion_evaluation_mode"]
+          id?: string
+          maximum_score?: number
+          order_index?: number
+          rubric?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edital_criteria_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edital_segments: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          edital_id: string
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          edital_id: string
+          id?: string
+          name: string
+          order_index?: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          edital_id?: string
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edital_segments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "edital_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "edital_segments_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_snapshots: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          edital_id: string
+          evaluation_id: string | null
+          id: string
+          normative_version: string | null
+          payload: Json
+          proponent_id: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          edital_id: string
+          evaluation_id?: string | null
+          id?: string
+          normative_version?: string | null
+          payload: Json
+          proponent_id: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          edital_id?: string
+          evaluation_id?: string | null
+          id?: string
+          normative_version?: string | null
+          payload?: Json
+          proponent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_snapshots_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_snapshots_proponent_id_fkey"
+            columns: ["proponent_id"]
+            isOneToOne: false
+            referencedRelation: "proponents"
+            referencedColumns: ["id"]
+          },
         ]
       }
       evaluations: {
         Row: {
           bonus_subtotal: number
+          edital_id: string | null
           export_ready: boolean
           id: string
           individual_total: number
@@ -327,6 +689,7 @@ export type Database = {
         }
         Insert: {
           bonus_subtotal?: number
+          edital_id?: string | null
           export_ready?: boolean
           id?: string
           individual_total?: number
@@ -338,6 +701,7 @@ export type Database = {
         }
         Update: {
           bonus_subtotal?: number
+          edital_id?: string | null
           export_ready?: boolean
           id?: string
           individual_total?: number
@@ -348,6 +712,13 @@ export type Database = {
           zero_in_mandatory_criterion?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "evaluations_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "evaluations_proponent_id_fkey"
             columns: ["proponent_id"]
@@ -367,6 +738,7 @@ export type Database = {
           data_da_acao: string | null
           descricao_factual: string
           duplicata_de: string | null
+          edital_id: string | null
           file_id: string | null
           file_version_id: string | null
           id: string
@@ -393,6 +765,7 @@ export type Database = {
           data_da_acao?: string | null
           descricao_factual: string
           duplicata_de?: string | null
+          edital_id?: string | null
           file_id?: string | null
           file_version_id?: string | null
           id?: string
@@ -419,6 +792,7 @@ export type Database = {
           data_da_acao?: string | null
           descricao_factual?: string
           duplicata_de?: string | null
+          edital_id?: string | null
           file_id?: string | null
           file_version_id?: string | null
           id?: string
@@ -442,6 +816,13 @@ export type Database = {
             columns: ["duplicata_de"]
             isOneToOne: false
             referencedRelation: "evidence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
             referencedColumns: ["id"]
           },
           {
@@ -517,6 +898,7 @@ export type Database = {
           drive_file_id: string | null
           drive_modified_time: string | null
           drive_seen_at: string | null
+          edital_id: string | null
           id: string
           mime_type: string | null
           nome: string
@@ -532,6 +914,7 @@ export type Database = {
           drive_file_id?: string | null
           drive_modified_time?: string | null
           drive_seen_at?: string | null
+          edital_id?: string | null
           id?: string
           mime_type?: string | null
           nome: string
@@ -547,6 +930,7 @@ export type Database = {
           drive_file_id?: string | null
           drive_modified_time?: string | null
           drive_seen_at?: string | null
+          edital_id?: string | null
           id?: string
           mime_type?: string | null
           nome?: string
@@ -555,6 +939,13 @@ export type Database = {
           tipo_documental?: Database["public"]["Enums"]["document_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "files_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "files_proponent_id_fkey"
             columns: ["proponent_id"]
@@ -569,6 +960,7 @@ export type Database = {
           created_at: string
           criado_por_agente: string | null
           descricao: string
+          edital_id: string | null
           file_id: string | null
           id: string
           pagina: number | null
@@ -580,6 +972,7 @@ export type Database = {
           created_at?: string
           criado_por_agente?: string | null
           descricao: string
+          edital_id?: string | null
           file_id?: string | null
           id?: string
           pagina?: number | null
@@ -591,6 +984,7 @@ export type Database = {
           created_at?: string
           criado_por_agente?: string | null
           descricao?: string
+          edital_id?: string | null
           file_id?: string | null
           id?: string
           pagina?: number | null
@@ -599,6 +993,13 @@ export type Database = {
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "flags_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flags_file_id_fkey"
             columns: ["file_id"]
@@ -615,10 +1016,67 @@ export type Database = {
           },
         ]
       }
+      job_stages: {
+        Row: {
+          attempts: number
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          job_id: string
+          order_index: number
+          preserved: boolean
+          retryable: boolean
+          stage: string
+          started_at: string | null
+          state: Database["public"]["Enums"]["job_stage_state"]
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id: string
+          order_index?: number
+          preserved?: boolean
+          retryable?: boolean
+          stage: string
+          started_at?: string | null
+          state?: Database["public"]["Enums"]["job_stage_state"]
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id?: string
+          order_index?: number
+          preserved?: boolean
+          retryable?: boolean
+          stage?: string
+          started_at?: string | null
+          state?: Database["public"]["Enums"]["job_stage_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_stages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "processing_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pareceres: {
         Row: {
           aprovado_pela_avaliadora: boolean
           created_at: string
+          edital_id: string | null
           gerado_por_agente: string
           id: string
           proponent_id: string
@@ -628,6 +1086,7 @@ export type Database = {
         Insert: {
           aprovado_pela_avaliadora?: boolean
           created_at?: string
+          edital_id?: string | null
           gerado_por_agente?: string
           id?: string
           proponent_id: string
@@ -637,6 +1096,7 @@ export type Database = {
         Update: {
           aprovado_pela_avaliadora?: boolean
           created_at?: string
+          edital_id?: string | null
           gerado_por_agente?: string
           id?: string
           proponent_id?: string
@@ -645,7 +1105,74 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "pareceres_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pareceres_proponent_id_fkey"
+            columns: ["proponent_id"]
+            isOneToOne: false
+            referencedRelation: "proponents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processing_jobs: {
+        Row: {
+          created_at: string
+          edital_id: string
+          error_code: string | null
+          error_message: string | null
+          external_job_id: string | null
+          finished_at: string | null
+          id: string
+          proponent_id: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["job_stage_state"]
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edital_id: string
+          error_code?: string | null
+          error_message?: string | null
+          external_job_id?: string | null
+          finished_at?: string | null
+          id?: string
+          proponent_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_stage_state"]
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edital_id?: string
+          error_code?: string | null
+          error_message?: string | null
+          external_job_id?: string | null
+          finished_at?: string | null
+          id?: string
+          proponent_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_stage_state"]
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processing_jobs_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processing_jobs_proponent_id_fkey"
             columns: ["proponent_id"]
             isOneToOne: false
             referencedRelation: "proponents"
@@ -710,6 +1237,7 @@ export type Database = {
           ciclo1_alerta: string | null
           created_at: string
           created_by: string | null
+          edital_id: string | null
           id: string
           nome_canonico: string
           status: Database["public"]["Enums"]["proponent_status"]
@@ -721,6 +1249,7 @@ export type Database = {
           ciclo1_alerta?: string | null
           created_at?: string
           created_by?: string | null
+          edital_id?: string | null
           id?: string
           nome_canonico: string
           status?: Database["public"]["Enums"]["proponent_status"]
@@ -734,6 +1263,7 @@ export type Database = {
           ciclo1_alerta?: string | null
           created_at?: string
           created_by?: string | null
+          edital_id?: string | null
           id?: string
           nome_canonico?: string
           status?: Database["public"]["Enums"]["proponent_status"]
@@ -741,7 +1271,15 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_proponente"]
             | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "proponents_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reference_document_versions: {
         Row: {
@@ -911,6 +1449,7 @@ export type Database = {
       sync_runs: {
         Row: {
           drive_source_id: string
+          edital_id: string | null
           error_message: string | null
           finished_at: string | null
           id: string
@@ -922,6 +1461,7 @@ export type Database = {
         }
         Insert: {
           drive_source_id: string
+          edital_id?: string | null
           error_message?: string | null
           finished_at?: string | null
           id?: string
@@ -933,6 +1473,7 @@ export type Database = {
         }
         Update: {
           drive_source_id?: string
+          edital_id?: string | null
           error_message?: string | null
           finished_at?: string | null
           id?: string
@@ -948,6 +1489,13 @@ export type Database = {
             columns: ["drive_source_id"]
             isOneToOne: false
             referencedRelation: "drive_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_runs_edital_id_fkey"
+            columns: ["edital_id"]
+            isOneToOne: false
+            referencedRelation: "editais"
             referencedColumns: ["id"]
           },
         ]
@@ -992,6 +1540,7 @@ export type Database = {
         | "agente_merito"
         | "agente_administrativo"
         | "auditor"
+      criterion_evaluation_mode: "ai" | "deterministic" | "hybrid" | "human"
       document_type:
         | "formulario"
         | "identidade"
@@ -1000,7 +1549,22 @@ export type Database = {
         | "grp"
         | "zimbra"
         | "outro"
+      edital_status:
+        | "rascunho"
+        | "configuracao"
+        | "ativo"
+        | "pausado"
+        | "encerrado"
+        | "arquivado"
       evidence_robustez: "alta" | "media" | "declaratoria"
+      job_stage_state:
+        | "aguardando"
+        | "na_fila"
+        | "processando"
+        | "concluido"
+        | "falhou"
+        | "revisao"
+        | "cancelado"
       normative_status: "vigente" | "arquivado"
       proponent_status:
         | "nao_importado"
@@ -1149,6 +1713,7 @@ export const Constants = {
         "agente_administrativo",
         "auditor",
       ],
+      criterion_evaluation_mode: ["ai", "deterministic", "hybrid", "human"],
       document_type: [
         "formulario",
         "identidade",
@@ -1158,7 +1723,24 @@ export const Constants = {
         "zimbra",
         "outro",
       ],
+      edital_status: [
+        "rascunho",
+        "configuracao",
+        "ativo",
+        "pausado",
+        "encerrado",
+        "arquivado",
+      ],
       evidence_robustez: ["alta", "media", "declaratoria"],
+      job_stage_state: [
+        "aguardando",
+        "na_fila",
+        "processando",
+        "concluido",
+        "falhou",
+        "revisao",
+        "cancelado",
+      ],
       normative_status: ["vigente", "arquivado"],
       proponent_status: [
         "nao_importado",
