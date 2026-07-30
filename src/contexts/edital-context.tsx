@@ -1,8 +1,11 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import type { ActiveEdital } from "@/lib/api/types";
 import { isEditalReadOnly, toActiveEdital, useEdital, useEditais } from "@/lib/queries/editais";
+
+/** Guarda o último edital aberto para retornos externos (ex.: OAuth do Google). */
+export const LAST_EDITAL_STORAGE_KEY = "pnab:last-edital-id";
 
 interface EditalContextValue {
   editalId: string | undefined;
