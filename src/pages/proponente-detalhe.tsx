@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,8 +68,7 @@ const CRITERION_LABEL: Record<string, string> = {
   G: "Bônus de ação afirmativa",
 };
 
-export function ProponentDetail() {
-  const { id } = useParams({ from: "/proponentes/$id" });
+export function ProponentDetail({ id }: { id: string }) {
   const { data: p, isLoading } = useProponent(id);
   const { data: scores } = useCriterionScores(id);
   const updateScore = useUpdateCriterionScore(id);

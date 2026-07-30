@@ -34,8 +34,7 @@ const ERROR_LABEL: Record<string, string> = {
   unexpected: "Erro inesperado durante a conexão.",
 };
 
-export function FonteDocumental() {
-  const search = Route.useSearch();
+export function FonteDocumental({ search }: { search: FonteSearch }) {
   const { data: connection, isLoading: loadingConnection } = useActiveDriveConnection();
   const { data: source } = useDriveSource(connection?.id);
   const { data: latestRun } = useLatestSyncRun(source?.id);
