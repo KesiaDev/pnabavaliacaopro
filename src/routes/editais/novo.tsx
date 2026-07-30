@@ -43,7 +43,7 @@ function emptyCriterion(index: number): CriterionDefinition {
     eliminatory: false,
     bonus: false,
     orderIndex: index,
-    evaluationMode: "faixas",
+    evaluationMode: "hybrid",
     rubric: {},
   };
 }
