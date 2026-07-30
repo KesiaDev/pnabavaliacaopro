@@ -139,6 +139,12 @@ export function AppShell({
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
+        {readOnly && (
+          <div className="px-8 py-2 bg-warning/15 border-b border-warning/40 text-[12px] text-warning-foreground flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            Edital encerrado — modo somente leitura. Consulta e exportação continuam liberadas.
+          </div>
+        )}
         <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
           <div className="px-8 py-5 flex items-center gap-6">
             <div className="min-w-0 flex-1">
@@ -157,9 +163,11 @@ export function AppShell({
         </header>
         <main className="flex-1 px-8 py-8">{children}</main>
         <footer className="px-8 py-4 border-t border-border text-[11px] text-muted-foreground flex items-center justify-between">
-          <span>PNAB · Caxias · Edital 119/2026 · Avaliação individual</span>
-          <span className="font-mono">Baseline v3 · sync 14/03/2026 12:04</span>
+          <span>PNAB · Caxias · {editalLabel} · Nota individual — Viviane da Rocha Palma</span>
+          <span className="font-mono">Revisão humana obrigatória</span>
         </footer>
+      </div>
+
       </div>
     </div>
   );
