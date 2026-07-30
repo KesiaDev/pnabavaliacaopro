@@ -22,6 +22,7 @@ import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
 import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
 import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
 import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
+import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
 import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -90,6 +91,12 @@ const EditaisEditalIdFonteDocumentalRoute =
     path: '/editais/$editalId/fonte-documental',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EditaisEditalIdProponentesIndexRoute =
+  EditaisEditalIdProponentesIndexRouteImport.update({
+    id: '/editais/$editalId/proponentes/',
+    path: '/editais/$editalId/proponentes/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiGoogleOauthCallbackRoute = ApiGoogleOauthCallbackRouteImport.update({
   id: '/api/google/oauth/callback',
   path: '/api/google/oauth/callback',
@@ -111,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,6 +135,7 @@ export interface FileRoutesByTo {
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,6 +153,7 @@ export interface FileRoutesById {
   '/editais/$editalId/painel': typeof EditaisEditalIdPainelRoute
   '/editais/$editalId/': typeof EditaisEditalIdIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
+  '/editais/$editalId/proponentes/': typeof EditaisEditalIdProponentesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/editais/$editalId/painel'
     | '/editais/$editalId/'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/editais/$editalId/painel'
     | '/editais/$editalId'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes'
   id:
     | '__root__'
     | '/'
@@ -194,6 +206,7 @@ export interface FileRouteTypes {
     | '/editais/$editalId/painel'
     | '/editais/$editalId/'
     | '/api/google/oauth/callback'
+    | '/editais/$editalId/proponentes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -211,6 +224,7 @@ export interface RootRouteChildren {
   EditaisEditalIdPainelRoute: typeof EditaisEditalIdPainelRoute
   EditaisEditalIdIndexRoute: typeof EditaisEditalIdIndexRoute
   ApiGoogleOauthCallbackRoute: typeof ApiGoogleOauthCallbackRoute
+  EditaisEditalIdProponentesIndexRoute: typeof EditaisEditalIdProponentesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -306,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdFonteDocumentalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editais/$editalId/proponentes/': {
+      id: '/editais/$editalId/proponentes/'
+      path: '/editais/$editalId/proponentes'
+      fullPath: '/editais/$editalId/proponentes/'
+      preLoaderRoute: typeof EditaisEditalIdProponentesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/google/oauth/callback': {
       id: '/api/google/oauth/callback'
       path: '/api/google/oauth/callback'
@@ -331,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   EditaisEditalIdPainelRoute: EditaisEditalIdPainelRoute,
   EditaisEditalIdIndexRoute: EditaisEditalIdIndexRoute,
   ApiGoogleOauthCallbackRoute: ApiGoogleOauthCallbackRoute,
+  EditaisEditalIdProponentesIndexRoute: EditaisEditalIdProponentesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
