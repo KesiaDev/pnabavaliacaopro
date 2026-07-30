@@ -17,6 +17,7 @@ import { Route as DocumentosNormativosRouteImport } from './routes/documentos-no
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
+import { Route as EditaisIndexRouteImport } from './routes/editais/index'
 import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
 import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 
@@ -60,6 +61,11 @@ const ProponentesIndexRoute = ProponentesIndexRouteImport.update({
   path: '/proponentes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditaisIndexRoute = EditaisIndexRouteImport.update({
+  id: '/editais/',
+  path: '/editais/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProponentesIdRoute = ProponentesIdRouteImport.update({
   id: '/proponentes/$id',
   path: '/proponentes/$id',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais': typeof EditaisIndexRoute
   '/proponentes': typeof ProponentesIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/mudancas': typeof MudancasRoute
   '/reset-password': typeof ResetPasswordRoute
   '/proponentes/$id': typeof ProponentesIdRoute
+  '/editais/': typeof EditaisIndexRoute
   '/proponentes/': typeof ProponentesIndexRoute
   '/api/google/oauth/callback': typeof ApiGoogleOauthCallbackRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/mudancas'
     | '/reset-password'
     | '/proponentes/$id'
+    | '/editais/'
     | '/proponentes/'
     | '/api/google/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/mudancas'
     | '/reset-password'
     | '/proponentes/$id'
+    | '/editais'
     | '/proponentes'
     | '/api/google/oauth/callback'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/mudancas'
     | '/reset-password'
     | '/proponentes/$id'
+    | '/editais/'
     | '/proponentes/'
     | '/api/google/oauth/callback'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   MudancasRoute: typeof MudancasRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ProponentesIdRoute: typeof ProponentesIdRoute
+  EditaisIndexRoute: typeof EditaisIndexRoute
   ProponentesIndexRoute: typeof ProponentesIndexRoute
   ApiGoogleOauthCallbackRoute: typeof ApiGoogleOauthCallbackRoute
 }
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProponentesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editais/': {
+      id: '/editais/'
+      path: '/editais'
+      fullPath: '/editais/'
+      preLoaderRoute: typeof EditaisIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/proponentes/$id': {
       id: '/proponentes/$id'
       path: '/proponentes/$id'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   MudancasRoute: MudancasRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ProponentesIdRoute: ProponentesIdRoute,
+  EditaisIndexRoute: EditaisIndexRoute,
   ProponentesIndexRoute: ProponentesIndexRoute,
   ApiGoogleOauthCallbackRoute: ApiGoogleOauthCallbackRoute,
 }
