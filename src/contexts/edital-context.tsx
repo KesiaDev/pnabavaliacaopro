@@ -32,6 +32,13 @@ export function EditalProvider({ children }: { children: ReactNode }) {
   const editais = useMemo(() => (list ?? []).map(toActiveEdital), [list]);
   const edital = row ? toActiveEdital(row) : null;
 
+  useEffect(() => {
+    if (editalId && typeof window !== "undefined") {
+      window.sessionStorage.setItem(LAST_EDITAL_STORAGE_KEY, editalId);
+    }
+  }, [editalId]);
+
+
   const value = useMemo<EditalContextValue>(
     () => ({
       editalId,
