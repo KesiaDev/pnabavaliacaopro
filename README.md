@@ -1,6 +1,9 @@
 # PNAB Avaliação Pro 2026
 
-# PROMPT-MESTRE — PLATAFORMA DE AVALIAÇÃO ASSISTIDA PNAB | EDITAL 119/2026
+Plataforma multiedital de avaliação assistida (preparada para o Edital 120/2026 e novos editais).
+
+# PROMPT-MESTRE — PLATAFORMA DE AVALIAÇÃO ASSISTIDA PNAB
+
 
 ## COMO USAR
 
