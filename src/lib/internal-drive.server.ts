@@ -146,6 +146,49 @@ export async function handleCreateSyncRun(request: Request): Promise<Response> {
   return jsonResponse({ id: data.id as string }, 201);
 }
 
+const executeSyncRunBodySchema = z.object({
+  accessToken: z.string().min(1),
+});
+
+// Dispara a varredura recursiva real (listar Drive, baixar, hash, gravar
+// proponents/files/file_versions/sync_changes) -- chamado pelo Worker do
+// Railway depois de renovar o access_token do Google. O corpo pode levar
+// minutos numa pasta grande; o próprio módulo já grava o status final em
+// sync_runs (sucesso ou erro) antes de retornar/lançar.
+export async function handleExecuteSyncRun(
+  request: Request,
+  params: { syncRunId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = executeSyncRunBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { executeSyncRun } = await import("@/lib/drive-sync-executor.server");
+  try {
+    const stats = await executeSyncRun(params.syncRunId, parsed.data.accessToken);
+    return jsonResponse({ ok: true, stats }, 200);
+  } catch (err) {
+    return jsonResponse(
+      {
+        code: "sync_execution_failed",
+        message: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
+  }
+}
+
 const finishSyncRunBodySchema = z.object({
   status: z.enum(["concluido", "erro"]),
   stats: z.record(z.number()).nullable().optional(),

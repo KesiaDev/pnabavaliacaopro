@@ -56,6 +56,10 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleFinishSyncRun } = await import("./lib/internal-drive.server");
     return handleFinishSyncRun(request, { syncRunId: rest[1] });
   }
+  if (rest.length === 3 && rest[0] === "sync-runs" && rest[2] === "execute") {
+    const { handleExecuteSyncRun } = await import("./lib/internal-drive.server");
+    return handleExecuteSyncRun(request, { syncRunId: rest[1] });
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
