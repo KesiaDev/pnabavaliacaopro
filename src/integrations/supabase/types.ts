@@ -129,6 +129,38 @@ export type Database = {
         }
         Relationships: []
       }
+      chunk_embeddings: {
+        Row: {
+          chunk_id: string
+          created_at: string
+          embedding: string
+          id: string
+          modelo: string
+        }
+        Insert: {
+          chunk_id: string
+          created_at?: string
+          embedding: string
+          id?: string
+          modelo?: string
+        }
+        Update: {
+          chunk_id?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          modelo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chunk_embeddings_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: true
+            referencedRelation: "document_chunks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cost_entries: {
         Row: {
           cached_tokens: number
@@ -264,6 +296,67 @@ export type Database = {
         }
         Relationships: []
       }
+      document_chunks: {
+        Row: {
+          created_at: string
+          file_id: string
+          file_version_id: string
+          id: string
+          ordem: number
+          pagina_final: number
+          pagina_inicial: number
+          proponent_id: string
+          texto: string
+          tokens_estimados: number
+        }
+        Insert: {
+          created_at?: string
+          file_id: string
+          file_version_id: string
+          id?: string
+          ordem: number
+          pagina_final: number
+          pagina_inicial: number
+          proponent_id: string
+          texto: string
+          tokens_estimados?: number
+        }
+        Update: {
+          created_at?: string
+          file_id?: string
+          file_version_id?: string
+          id?: string
+          ordem?: number
+          pagina_final?: number
+          pagina_inicial?: number
+          proponent_id?: string
+          texto?: string
+          tokens_estimados?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_chunks_file_version_id_fkey"
+            columns: ["file_version_id"]
+            isOneToOne: false
+            referencedRelation: "file_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_chunks_proponent_id_fkey"
+            columns: ["proponent_id"]
+            isOneToOne: false
+            referencedRelation: "proponents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_classifications: {
         Row: {
           confianca: number | null
@@ -305,6 +398,63 @@ export type Database = {
           },
           {
             foreignKeyName: "document_classifications_file_version_id_fkey"
+            columns: ["file_version_id"]
+            isOneToOne: false
+            referencedRelation: "file_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_pages: {
+        Row: {
+          created_at: string
+          file_id: string
+          file_version_id: string
+          id: string
+          numero_pagina: number
+          precisa_visao: boolean
+          printable_ratio: number | null
+          qualidade: Database["public"]["Enums"]["page_quality"]
+          storage_path_imagem: string | null
+          text_length: number
+          texto: string
+        }
+        Insert: {
+          created_at?: string
+          file_id: string
+          file_version_id: string
+          id?: string
+          numero_pagina: number
+          precisa_visao?: boolean
+          printable_ratio?: number | null
+          qualidade?: Database["public"]["Enums"]["page_quality"]
+          storage_path_imagem?: string | null
+          text_length?: number
+          texto?: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string
+          file_version_id?: string
+          id?: string
+          numero_pagina?: number
+          precisa_visao?: boolean
+          printable_ratio?: number | null
+          qualidade?: Database["public"]["Enums"]["page_quality"]
+          storage_path_imagem?: string | null
+          text_length?: number
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_pages_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_pages_file_version_id_fkey"
             columns: ["file_version_id"]
             isOneToOne: false
             referencedRelation: "file_versions"
@@ -1566,6 +1716,7 @@ export type Database = {
         | "revisao"
         | "cancelado"
       normative_status: "vigente" | "arquivado"
+      page_quality: "boa" | "baixa" | "imagem_pura"
       proponent_status:
         | "nao_importado"
         | "importado"
@@ -1742,6 +1893,7 @@ export const Constants = {
         "cancelado",
       ],
       normative_status: ["vigente", "arquivado"],
+      page_quality: ["boa", "baixa", "imagem_pura"],
       proponent_status: [
         "nao_importado",
         "importado",
