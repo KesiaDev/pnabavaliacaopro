@@ -97,10 +97,13 @@ export async function handleCreateDriveSource(request: Request): Promise<Respons
   );
 }
 
+// Valores batem com o check constraint real de supabase/migrations
+// (.../phase2_drive_import.sql): kind in ('baseline','sync'), status in
+// ('em_andamento','concluido','erro') -- nunca "incremental"/"processando".
 const createSyncRunBodySchema = z.object({
   driveSourceId: z.string().uuid(),
   editalId: z.string().uuid(),
-  kind: z.enum(["baseline", "incremental"]),
+  kind: z.enum(["baseline", "sync"]),
   triggeredBy: z.string().uuid(),
 });
 
@@ -129,7 +132,7 @@ export async function handleCreateSyncRun(request: Request): Promise<Response> {
       drive_source_id: driveSourceId,
       edital_id: editalId,
       kind,
-      status: "processando",
+      status: "em_andamento",
       triggered_by: triggeredBy,
     })
     .select("id")

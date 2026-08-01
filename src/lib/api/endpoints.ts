@@ -33,14 +33,14 @@ export const driveApi = {
     api.post<{ id: string; folderName: string }>(`/v1/editais/${editalId}/drive-source`, {
       folderUrl,
     }),
-  sync: (editalId: string, kind: "baseline" | "incremental" = "incremental") =>
+  // "sync" (não "incremental") -- bate com o check constraint de sync_runs.kind.
+  sync: (editalId: string, kind: "baseline" | "sync" = "sync") =>
     api.post<{ syncRunId: string }>(`/v1/editais/${editalId}/sync`, { kind }),
   syncRun: (syncRunId: string) => api.get<SyncRun>(`/v1/sync-runs/${syncRunId}`),
 };
 
 export const applicationsApi = {
-  list: (editalId: string) =>
-    api.get<ApplicationSummary[]>(`/v1/editais/${editalId}/applications`),
+  list: (editalId: string) => api.get<ApplicationSummary[]>(`/v1/editais/${editalId}/applications`),
   get: (applicationId: string) => api.get<ApplicationSummary>(`/v1/applications/${applicationId}`),
   process: (applicationId: string) =>
     api.post<{ jobId: string }>(`/v1/applications/${applicationId}/process`),

@@ -142,7 +142,7 @@ export function useSaveDriveSource(editalId: string | undefined) {
   });
 }
 
-function useTriggerSync(editalId: string | undefined, kind: "baseline" | "incremental") {
+function useTriggerSync(editalId: string | undefined, kind: "baseline" | "sync") {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
@@ -163,5 +163,5 @@ export function useRunBaseline(editalId: string | undefined) {
 }
 
 export function useRunSync(editalId: string | undefined) {
-  return useTriggerSync(editalId, "incremental");
+  return useTriggerSync(editalId, "sync");
 }
