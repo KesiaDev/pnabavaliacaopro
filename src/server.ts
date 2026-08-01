@@ -72,6 +72,14 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleSaveDocumentPages } = await import("./lib/internal-documents.server");
     return handleSaveDocumentPages(request);
   }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "pages-needing-vision") {
+    const { handleListPagesNeedingVision } = await import("./lib/internal-documents.server");
+    return handleListPagesNeedingVision(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "document-pages" && rest[2] === "image") {
+    const { handleSaveDocumentPageImage } = await import("./lib/internal-documents.server");
+    return handleSaveDocumentPageImage(request, { pageId: rest[1] });
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),

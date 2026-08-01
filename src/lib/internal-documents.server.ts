@@ -129,3 +129,85 @@ export async function handleSaveDocumentPages(request: Request): Promise<Respons
   }
   return jsonResponse({ ok: true, saved: rows.length }, 200);
 }
+
+export async function handleListPagesNeedingVision(
+  request: Request,
+  params: { proponentId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // precisa_visao = true e ainda sem imagem -- idempotente: uma etapa
+  // retomada depois de falha parcial não re-renderiza o que já foi feito.
+  const { data, error } = await supabaseAdmin
+    .from("document_pages")
+    .select("id, file_id, numero_pagina, files!inner(proponent_id)")
+    .eq("files.proponent_id", params.proponentId)
+    .eq("precisa_visao", true)
+    .is("storage_path_imagem", null);
+  if (error) {
+    return jsonResponse({ code: "list_failed", message: error.message }, 500);
+  }
+
+  const pages = (data ?? []).map((p) => ({
+    pageId: p.id as string,
+    fileId: p.file_id as string,
+    numeroPagina: p.numero_pagina as number,
+  }));
+  return jsonResponse({ pages }, 200);
+}
+
+const saveDocumentPageImageBodySchema = z.object({
+  imageBase64: z.string().min(1),
+  mimeType: z.string().min(1),
+});
+
+export async function handleSaveDocumentPageImage(
+  request: Request,
+  params: { pageId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = saveDocumentPageImageBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const buffer = Buffer.from(parsed.data.imageBase64, "base64");
+  const storagePath = `pages/${params.pageId}.png`;
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from(DOSSIES_BUCKET)
+    .upload(storagePath, buffer, { upsert: true, contentType: parsed.data.mimeType });
+  if (uploadError) {
+    return jsonResponse({ code: "upload_failed", message: uploadError.message }, 500);
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from("document_pages")
+    .update({ storage_path_imagem: storagePath })
+    .eq("id", params.pageId);
+  if (updateError) {
+    return jsonResponse({ code: "update_failed", message: updateError.message }, 500);
+  }
+
+  return jsonResponse({ ok: true }, 200);
+}
