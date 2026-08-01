@@ -189,6 +189,43 @@ export async function handleExecuteSyncRun(
   }
 }
 
+const backfillProponentsEditalBodySchema = z.object({
+  editalId: z.string().uuid(),
+});
+
+// Backfill único: proponents.edital_id foi adicionado numa migração depois
+// que o executor de sync já existia (ver drive-sync-executor.server.ts),
+// então proponentes criados antes desse conserto ficaram com edital_id nulo
+// -- invisíveis na tela Proponentes, que filtra por edital. Idempotente
+// (WHERE edital_id IS NULL vira no-op depois da primeira execução).
+export async function handleBackfillProponentsEdital(request: Request): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = backfillProponentsEditalBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("proponents")
+    .update({ edital_id: parsed.data.editalId })
+    .is("edital_id", null)
+    .select("id");
+  if (error) {
+    return jsonResponse({ code: "backfill_failed", message: error.message }, 500);
+  }
+  return jsonResponse({ ok: true, updated: data?.length ?? 0 }, 200);
+}
+
 const finishSyncRunBodySchema = z.object({
   status: z.enum(["concluido", "erro"]),
   stats: z.record(z.number()).nullable().optional(),

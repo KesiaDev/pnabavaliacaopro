@@ -60,6 +60,10 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleExecuteSyncRun } = await import("./lib/internal-drive.server");
     return handleExecuteSyncRun(request, { syncRunId: rest[1] });
   }
+  if (rest.length === 2 && rest[0] === "proponents" && rest[1] === "backfill-edital") {
+    const { handleBackfillProponentsEdital } = await import("./lib/internal-drive.server");
+    return handleBackfillProponentsEdital(request);
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
