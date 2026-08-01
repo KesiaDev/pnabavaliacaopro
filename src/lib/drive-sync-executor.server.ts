@@ -19,8 +19,17 @@ import {
   type DriveFile,
 } from "./google-drive-api.server";
 
+// O Storage do Supabase rejeita ("Invalid key") nomes de arquivo com acento
+// (ã, ç, é...) ou travessão -- visto na prática em dezenas de uploads
+// falhando com dossiês reais. Normaliza pra ASCII puro (NFKD + remove
+// diacríticos) e troca qualquer outro caractere fora do allowlist seguro por
+// "_", em vez de só bloquear os poucos símbolos óbvios de path.
 function sanitizeFileName(name: string): string {
-  return name.replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200);
+  const ascii = name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^A-Za-z0-9._ -]/g, "_");
+  return ascii.slice(0, 200);
 }
 
 function sha256(buf: Buffer): string {
