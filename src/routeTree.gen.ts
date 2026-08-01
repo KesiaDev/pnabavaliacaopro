@@ -9,53 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as MudancasRouteImport } from './routes/mudancas'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as FonteDocumentalRouteImport } from './routes/fonte-documental'
-import { Route as DocumentosNormativosRouteImport } from './routes/documentos-normativos'
-import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as DocumentosNormativosRouteImport } from './routes/documentos-normativos'
+import { Route as FonteDocumentalRouteImport } from './routes/fonte-documental'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MudancasRouteImport } from './routes/mudancas'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as EditaisIndexRouteImport } from './routes/editais/index'
-import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
 import { Route as EditaisNovoRouteImport } from './routes/editais/novo'
+import { Route as ProponentesIndexRouteImport } from './routes/proponentes/index'
+import { Route as ProponentesIdRouteImport } from './routes/proponentes/$id'
 import { Route as EditaisEditalIdIndexRouteImport } from './routes/editais/$editalId/index'
-import { Route as EditaisEditalIdProcessamentoRouteImport } from './routes/editais/$editalId/processamento'
-import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
-import { Route as EditaisEditalIdMudancasRouteImport } from './routes/editais/$editalId/mudancas'
-import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
-import { Route as EditaisEditalIdDocumentosNormativosRouteImport } from './routes/editais/$editalId/documentos-normativos'
-import { Route as EditaisEditalIdCustosRouteImport } from './routes/editais/$editalId/custos'
-import { Route as EditaisEditalIdConfiguracaoRouteImport } from './routes/editais/$editalId/configuracao'
 import { Route as EditaisEditalIdAuditoriaRouteImport } from './routes/editais/$editalId/auditoria'
+import { Route as EditaisEditalIdConfiguracaoRouteImport } from './routes/editais/$editalId/configuracao'
+import { Route as EditaisEditalIdCustosRouteImport } from './routes/editais/$editalId/custos'
+import { Route as EditaisEditalIdDocumentosNormativosRouteImport } from './routes/editais/$editalId/documentos-normativos'
+import { Route as EditaisEditalIdFonteDocumentalRouteImport } from './routes/editais/$editalId/fonte-documental'
+import { Route as EditaisEditalIdMudancasRouteImport } from './routes/editais/$editalId/mudancas'
+import { Route as EditaisEditalIdPainelRouteImport } from './routes/editais/$editalId/painel'
+import { Route as EditaisEditalIdProcessamentoRouteImport } from './routes/editais/$editalId/processamento'
+import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 import { Route as EditaisEditalIdProponentesIndexRouteImport } from './routes/editais/$editalId/proponentes/index'
 import { Route as EditaisEditalIdProponentesApplicationIdRouteImport } from './routes/editais/$editalId/proponentes/$applicationId'
-import { Route as ApiGoogleOauthCallbackRouteImport } from './routes/api/google/oauth/callback'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MudancasRoute = MudancasRouteImport.update({
-  id: '/mudancas',
-  path: '/mudancas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FonteDocumentalRoute = FonteDocumentalRouteImport.update({
-  id: '/fonte-documental',
-  path: '/fonte-documental',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentosNormativosRoute = DocumentosNormativosRouteImport.update({
-  id: '/documentos-normativos',
-  path: '/documentos-normativos',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditoriaRoute = AuditoriaRouteImport.update({
@@ -63,14 +43,29 @@ const AuditoriaRoute = AuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DocumentosNormativosRoute = DocumentosNormativosRouteImport.update({
+  id: '/documentos-normativos',
+  path: '/documentos-normativos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProponentesIndexRoute = ProponentesIndexRouteImport.update({
-  id: '/proponentes/',
-  path: '/proponentes/',
+const FonteDocumentalRoute = FonteDocumentalRouteImport.update({
+  id: '/fonte-documental',
+  path: '/fonte-documental',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MudancasRoute = MudancasRouteImport.update({
+  id: '/mudancas',
+  path: '/mudancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditaisIndexRoute = EditaisIndexRouteImport.update({
@@ -78,19 +73,63 @@ const EditaisIndexRoute = EditaisIndexRouteImport.update({
   path: '/editais/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProponentesIdRoute = ProponentesIdRouteImport.update({
-  id: '/proponentes/$id',
-  path: '/proponentes/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EditaisNovoRoute = EditaisNovoRouteImport.update({
   id: '/editais/novo',
   path: '/editais/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProponentesIndexRoute = ProponentesIndexRouteImport.update({
+  id: '/proponentes/',
+  path: '/proponentes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProponentesIdRoute = ProponentesIdRouteImport.update({
+  id: '/proponentes/$id',
+  path: '/proponentes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EditaisEditalIdIndexRoute = EditaisEditalIdIndexRouteImport.update({
   id: '/editais/$editalId/',
   path: '/editais/$editalId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdAuditoriaRoute =
+  EditaisEditalIdAuditoriaRouteImport.update({
+    id: '/editais/$editalId/auditoria',
+    path: '/editais/$editalId/auditoria',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdConfiguracaoRoute =
+  EditaisEditalIdConfiguracaoRouteImport.update({
+    id: '/editais/$editalId/configuracao',
+    path: '/editais/$editalId/configuracao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdCustosRoute = EditaisEditalIdCustosRouteImport.update({
+  id: '/editais/$editalId/custos',
+  path: '/editais/$editalId/custos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdDocumentosNormativosRoute =
+  EditaisEditalIdDocumentosNormativosRouteImport.update({
+    id: '/editais/$editalId/documentos-normativos',
+    path: '/editais/$editalId/documentos-normativos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdFonteDocumentalRoute =
+  EditaisEditalIdFonteDocumentalRouteImport.update({
+    id: '/editais/$editalId/fonte-documental',
+    path: '/editais/$editalId/fonte-documental',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const EditaisEditalIdMudancasRoute = EditaisEditalIdMudancasRouteImport.update({
+  id: '/editais/$editalId/mudancas',
+  path: '/editais/$editalId/mudancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditaisEditalIdPainelRoute = EditaisEditalIdPainelRouteImport.update({
+  id: '/editais/$editalId/painel',
+  path: '/editais/$editalId/painel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditaisEditalIdProcessamentoRoute =
@@ -99,45 +138,11 @@ const EditaisEditalIdProcessamentoRoute =
     path: '/editais/$editalId/processamento',
     getParentRoute: () => rootRouteImport,
   } as any)
-const EditaisEditalIdPainelRoute = EditaisEditalIdPainelRouteImport.update({
-  id: '/editais/$editalId/painel',
-  path: '/editais/$editalId/painel',
+const ApiGoogleOauthCallbackRoute = ApiGoogleOauthCallbackRouteImport.update({
+  id: '/api/google/oauth/callback',
+  path: '/api/google/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EditaisEditalIdMudancasRoute = EditaisEditalIdMudancasRouteImport.update({
-  id: '/editais/$editalId/mudancas',
-  path: '/editais/$editalId/mudancas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EditaisEditalIdFonteDocumentalRoute =
-  EditaisEditalIdFonteDocumentalRouteImport.update({
-    id: '/editais/$editalId/fonte-documental',
-    path: '/editais/$editalId/fonte-documental',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const EditaisEditalIdDocumentosNormativosRoute =
-  EditaisEditalIdDocumentosNormativosRouteImport.update({
-    id: '/editais/$editalId/documentos-normativos',
-    path: '/editais/$editalId/documentos-normativos',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const EditaisEditalIdCustosRoute = EditaisEditalIdCustosRouteImport.update({
-  id: '/editais/$editalId/custos',
-  path: '/editais/$editalId/custos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EditaisEditalIdConfiguracaoRoute =
-  EditaisEditalIdConfiguracaoRouteImport.update({
-    id: '/editais/$editalId/configuracao',
-    path: '/editais/$editalId/configuracao',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const EditaisEditalIdAuditoriaRoute =
-  EditaisEditalIdAuditoriaRouteImport.update({
-    id: '/editais/$editalId/auditoria',
-    path: '/editais/$editalId/auditoria',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const EditaisEditalIdProponentesIndexRoute =
   EditaisEditalIdProponentesIndexRouteImport.update({
     id: '/editais/$editalId/proponentes/',
@@ -150,11 +155,6 @@ const EditaisEditalIdProponentesApplicationIdRoute =
     path: '/editais/$editalId/proponentes/$applicationId',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiGoogleOauthCallbackRoute = ApiGoogleOauthCallbackRouteImport.update({
-  id: '/api/google/oauth/callback',
-  path: '/api/google/oauth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -338,39 +338,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mudancas': {
-      id: '/mudancas'
-      path: '/mudancas'
-      fullPath: '/mudancas'
-      preLoaderRoute: typeof MudancasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fonte-documental': {
-      id: '/fonte-documental'
-      path: '/fonte-documental'
-      fullPath: '/fonte-documental'
-      preLoaderRoute: typeof FonteDocumentalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/documentos-normativos': {
-      id: '/documentos-normativos'
-      path: '/documentos-normativos'
-      fullPath: '/documentos-normativos'
-      preLoaderRoute: typeof DocumentosNormativosRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auditoria': {
@@ -380,18 +352,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/documentos-normativos': {
+      id: '/documentos-normativos'
+      path: '/documentos-normativos'
+      fullPath: '/documentos-normativos'
+      preLoaderRoute: typeof DocumentosNormativosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/proponentes/': {
-      id: '/proponentes/'
-      path: '/proponentes'
-      fullPath: '/proponentes/'
-      preLoaderRoute: typeof ProponentesIndexRouteImport
+    '/fonte-documental': {
+      id: '/fonte-documental'
+      path: '/fonte-documental'
+      fullPath: '/fonte-documental'
+      preLoaderRoute: typeof FonteDocumentalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mudancas': {
+      id: '/mudancas'
+      path: '/mudancas'
+      fullPath: '/mudancas'
+      preLoaderRoute: typeof MudancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/': {
@@ -401,18 +394,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/proponentes/$id': {
-      id: '/proponentes/$id'
-      path: '/proponentes/$id'
-      fullPath: '/proponentes/$id'
-      preLoaderRoute: typeof ProponentesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/editais/novo': {
       id: '/editais/novo'
       path: '/editais/novo'
       fullPath: '/editais/novo'
       preLoaderRoute: typeof EditaisNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proponentes/': {
+      id: '/proponentes/'
+      path: '/proponentes'
+      fullPath: '/proponentes/'
+      preLoaderRoute: typeof ProponentesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proponentes/$id': {
+      id: '/proponentes/$id'
+      path: '/proponentes/$id'
+      fullPath: '/proponentes/$id'
+      preLoaderRoute: typeof ProponentesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/': {
@@ -422,46 +422,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/editais/$editalId/processamento': {
-      id: '/editais/$editalId/processamento'
-      path: '/editais/$editalId/processamento'
-      fullPath: '/editais/$editalId/processamento'
-      preLoaderRoute: typeof EditaisEditalIdProcessamentoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editais/$editalId/painel': {
-      id: '/editais/$editalId/painel'
-      path: '/editais/$editalId/painel'
-      fullPath: '/editais/$editalId/painel'
-      preLoaderRoute: typeof EditaisEditalIdPainelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editais/$editalId/mudancas': {
-      id: '/editais/$editalId/mudancas'
-      path: '/editais/$editalId/mudancas'
-      fullPath: '/editais/$editalId/mudancas'
-      preLoaderRoute: typeof EditaisEditalIdMudancasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editais/$editalId/fonte-documental': {
-      id: '/editais/$editalId/fonte-documental'
-      path: '/editais/$editalId/fonte-documental'
-      fullPath: '/editais/$editalId/fonte-documental'
-      preLoaderRoute: typeof EditaisEditalIdFonteDocumentalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editais/$editalId/documentos-normativos': {
-      id: '/editais/$editalId/documentos-normativos'
-      path: '/editais/$editalId/documentos-normativos'
-      fullPath: '/editais/$editalId/documentos-normativos'
-      preLoaderRoute: typeof EditaisEditalIdDocumentosNormativosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editais/$editalId/custos': {
-      id: '/editais/$editalId/custos'
-      path: '/editais/$editalId/custos'
-      fullPath: '/editais/$editalId/custos'
-      preLoaderRoute: typeof EditaisEditalIdCustosRouteImport
+    '/editais/$editalId/auditoria': {
+      id: '/editais/$editalId/auditoria'
+      path: '/editais/$editalId/auditoria'
+      fullPath: '/editais/$editalId/auditoria'
+      preLoaderRoute: typeof EditaisEditalIdAuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/configuracao': {
@@ -471,11 +436,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditaisEditalIdConfiguracaoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/editais/$editalId/auditoria': {
-      id: '/editais/$editalId/auditoria'
-      path: '/editais/$editalId/auditoria'
-      fullPath: '/editais/$editalId/auditoria'
-      preLoaderRoute: typeof EditaisEditalIdAuditoriaRouteImport
+    '/editais/$editalId/custos': {
+      id: '/editais/$editalId/custos'
+      path: '/editais/$editalId/custos'
+      fullPath: '/editais/$editalId/custos'
+      preLoaderRoute: typeof EditaisEditalIdCustosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/documentos-normativos': {
+      id: '/editais/$editalId/documentos-normativos'
+      path: '/editais/$editalId/documentos-normativos'
+      fullPath: '/editais/$editalId/documentos-normativos'
+      preLoaderRoute: typeof EditaisEditalIdDocumentosNormativosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/fonte-documental': {
+      id: '/editais/$editalId/fonte-documental'
+      path: '/editais/$editalId/fonte-documental'
+      fullPath: '/editais/$editalId/fonte-documental'
+      preLoaderRoute: typeof EditaisEditalIdFonteDocumentalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/mudancas': {
+      id: '/editais/$editalId/mudancas'
+      path: '/editais/$editalId/mudancas'
+      fullPath: '/editais/$editalId/mudancas'
+      preLoaderRoute: typeof EditaisEditalIdMudancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/painel': {
+      id: '/editais/$editalId/painel'
+      path: '/editais/$editalId/painel'
+      fullPath: '/editais/$editalId/painel'
+      preLoaderRoute: typeof EditaisEditalIdPainelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editais/$editalId/processamento': {
+      id: '/editais/$editalId/processamento'
+      path: '/editais/$editalId/processamento'
+      fullPath: '/editais/$editalId/processamento'
+      preLoaderRoute: typeof EditaisEditalIdProcessamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/oauth/callback': {
+      id: '/api/google/oauth/callback'
+      path: '/api/google/oauth/callback'
+      fullPath: '/api/google/oauth/callback'
+      preLoaderRoute: typeof ApiGoogleOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editais/$editalId/proponentes/': {
@@ -490,13 +497,6 @@ declare module '@tanstack/react-router' {
       path: '/editais/$editalId/proponentes/$applicationId'
       fullPath: '/editais/$editalId/proponentes/$applicationId'
       preLoaderRoute: typeof EditaisEditalIdProponentesApplicationIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/google/oauth/callback': {
-      id: '/api/google/oauth/callback'
-      path: '/api/google/oauth/callback'
-      fullPath: '/api/google/oauth/callback'
-      preLoaderRoute: typeof ApiGoogleOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

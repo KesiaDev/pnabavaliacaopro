@@ -64,6 +64,14 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleBackfillProponentsEdital } = await import("./lib/internal-drive.server");
     return handleBackfillProponentsEdital(request);
   }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "files") {
+    const { handleListProponentFiles } = await import("./lib/internal-documents.server");
+    return handleListProponentFiles(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 1 && rest[0] === "document-pages") {
+    const { handleSaveDocumentPages } = await import("./lib/internal-documents.server");
+    return handleSaveDocumentPages(request);
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
