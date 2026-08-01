@@ -89,6 +89,7 @@ export async function executeSyncRun(syncRunId: string, accessToken: string): Pr
   if (!source) throw new Error("Pasta-fonte não encontrada para este sync_run.");
 
   const driveSourceId = source.id;
+  const editalId = run.edital_id as string;
   const kind = run.kind as "baseline" | "sync";
   const userId = run.triggered_by as string;
   const stats = zeroStats();
@@ -113,9 +114,15 @@ export async function executeSyncRun(syncRunId: string, accessToken: string): Pr
         continue;
       }
 
+      // Escopado por edital -- proponents.edital_id (migração 2026-07-30)
+      // separa o mesmo nome de pasta entre editais diferentes; sem o filtro,
+      // um proponente já existente em outro edital seria reaproveitado aqui
+      // (ou pior, a busca por nome/alias nunca bate porque o proponente
+      // certo do edital ainda não existe, mas um de outro edital existe).
       const { data: byName } = await supabaseAdmin
         .from("proponents")
         .select("id")
+        .eq("edital_id", editalId)
         .ilike("nome_canonico", folder.name)
         .maybeSingle();
 
@@ -124,8 +131,9 @@ export async function executeSyncRun(syncRunId: string, accessToken: string): Pr
       if (!proponentId) {
         const { data: byAlias } = await supabaseAdmin
           .from("proponent_aliases")
-          .select("proponent_id")
+          .select("proponent_id, proponents!inner(edital_id)")
           .ilike("alias", folder.name)
+          .eq("proponents.edital_id", editalId)
           .maybeSingle();
         proponentId = byAlias?.proponent_id as string | undefined;
       }
@@ -133,7 +141,12 @@ export async function executeSyncRun(syncRunId: string, accessToken: string): Pr
       if (!proponentId) {
         const { data: newProponent, error: newProponentError } = await supabaseAdmin
           .from("proponents")
-          .insert({ nome_canonico: folder.name, status: "importado", created_by: userId })
+          .insert({
+            nome_canonico: folder.name,
+            status: "importado",
+            created_by: userId,
+            edital_id: editalId,
+          })
           .select()
           .single();
         if (newProponentError || !newProponent) {
