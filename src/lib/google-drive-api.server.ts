@@ -122,19 +122,36 @@ export interface WalkedItem {
   topLevelFolderId?: string;
 }
 
+// Teto de segurança: nenhuma pasta-fonte real deveria ter mais itens que
+// isso. Existe só pra garantir que a varredura sempre termina (com erro
+// claro) em vez de rodar pra sempre -- ver nota sobre atalhos abaixo.
+const MAX_WALK_ITEMS = 20_000;
+
 export async function walkFolderRecursive(
   accessToken: string,
   rootFolderId: string,
 ): Promise<WalkedItem[]> {
   const result: WalkedItem[] = [];
+  // Atalho (shortcut) pra pasta é resolvido em resolveShortcut trocando o id
+  // pelo da pasta alvo -- se o Drive tiver um atalho apontando de volta pra
+  // um ancestral (comum em Drive compartilhado organizacional), sem isso a
+  // recursão nunca para. Também evita reprocessar a mesma pasta duas vezes
+  // se ela aparecer como filha por dois caminhos diferentes.
+  const visited = new Set<string>([rootFolderId]);
 
   async function walk(folderId: string, path: string, topLevelFolderId: string | undefined) {
     const children = await listFolderChildren(accessToken, folderId);
     for (const child of children) {
+      if (result.length >= MAX_WALK_ITEMS) {
+        throw new Error(
+          `Pasta-fonte excede o limite de ${MAX_WALK_ITEMS} itens (ou há um ciclo de atalhos) -- varredura interrompida.`,
+        );
+      }
       const isTopLevel = path === "";
       const childTopLevelId = isTopLevel ? child.id : topLevelFolderId;
       result.push({ file: child, parentPath: path, topLevelFolderId: childTopLevelId });
-      if (isFolder(child)) {
+      if (isFolder(child) && !visited.has(child.id)) {
+        visited.add(child.id);
         await walk(child.id, `${path}/${child.name}`, childTopLevelId);
       }
     }
