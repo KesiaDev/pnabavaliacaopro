@@ -18,6 +18,54 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+// Endpoints internos (HMAC, chamados só pelo Railway) são despachados aqui,
+// ANTES de entrar no roteador do TanStack -- o SSR streaming daquele
+// roteador serializa o valor de todo beforeLoad/loader via Seroval, que não
+// sabe serializar um Response cru (ReadableStream no corpo). Jogar isso
+// numa rota React quebrava de forma intermitente conforme a versão do
+// @lovable.dev/vite-tanstack-config; interceptar aqui evita o roteador de
+// vez, então nunca mais depende desse detalhe de implementação.
+async function handleInternalApi(request: Request): Promise<Response | null> {
+  const { pathname } = new URL(request.url);
+  if (!pathname.startsWith("/api/internal/")) return null;
+
+  const segments = pathname.split("/").filter(Boolean); // ["api","internal", ...]
+  const rest = segments.slice(2); // depois de "api","internal"
+
+  if (rest.length === 1 && rest[0] === "jobs") {
+    const { handleCreateJobRequest } = await import("./lib/internal-jobs.server");
+    return handleCreateJobRequest(request);
+  }
+  if (rest.length === 4 && rest[0] === "jobs" && rest[2] === "stages") {
+    const { handleUpdateStageRequest } = await import("./lib/internal-jobs.server");
+    return handleUpdateStageRequest(request, { jobId: rest[1], stage: rest[3] });
+  }
+  if (rest.length === 1 && rest[0] === "drive-connections") {
+    const { handleCreateDriveConnection } = await import("./lib/internal-drive.server");
+    return handleCreateDriveConnection(request);
+  }
+  if (rest.length === 1 && rest[0] === "drive-sources") {
+    const { handleCreateDriveSource } = await import("./lib/internal-drive.server");
+    return handleCreateDriveSource(request);
+  }
+  if (rest.length === 1 && rest[0] === "sync-runs") {
+    const { handleCreateSyncRun } = await import("./lib/internal-drive.server");
+    return handleCreateSyncRun(request);
+  }
+  if (rest.length === 3 && rest[0] === "sync-runs" && rest[2] === "finish") {
+    const { handleFinishSyncRun } = await import("./lib/internal-drive.server");
+    return handleFinishSyncRun(request, { syncRunId: rest[1] });
+  }
+
+  return new Response(
+    JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
+    {
+      status: 404,
+      headers: { "content-type": "application/json" },
+    },
+  );
+}
+
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
@@ -47,6 +95,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const internalResponse = await handleInternalApi(request);
+      if (internalResponse) return internalResponse;
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

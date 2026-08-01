@@ -1,9 +1,9 @@
-// Server-only (sufixo .server.ts) — mesma convenção do resto do app: só
-// importar dinamicamente de dentro de beforeLoad/handler, nunca no topo de
-// um arquivo de rota (senão o bundler do cliente reclama, ver
-// import-protection do TanStack Start).
-import { createServerOnlyFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+// Server-only (sufixo .server.ts). Chamado direto de src/server.ts (fora do
+// roteador do TanStack, ver comentário lá) -- nunca importado por uma rota
+// React, então nunca entra no bundle do cliente nem no pipeline de
+// serialização SSR (Seroval não sabe serializar um Response cru; jogar isso
+// num beforeLoad/loader quebra intermitentemente conforme a versão do
+// @lovable.dev/vite-tanstack-config).
 import { z } from "zod";
 import { PROCESSING_STAGES } from "@/lib/api/types";
 import { verifyInternalRequest, jsonResponse } from "@/lib/internal-auth.server";
@@ -14,12 +14,10 @@ const createJobBodySchema = z.object({
   triggeredBy: z.string().uuid().nullable().optional(),
 });
 
-export const handleCreateJobRequest = createServerOnlyFn(async (): Promise<Response> => {
-  const request = getRequest();
+export async function handleCreateJobRequest(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
   }
-
   const auth = await verifyInternalRequest(request);
   if (!auth.ok) {
     return jsonResponse(
@@ -27,7 +25,6 @@ export const handleCreateJobRequest = createServerOnlyFn(async (): Promise<Respo
       auth.errorStatus ?? 401,
     );
   }
-
   const parsed = createJobBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
   if (!parsed.success) {
     return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
@@ -68,7 +65,7 @@ export const handleCreateJobRequest = createServerOnlyFn(async (): Promise<Respo
   }
 
   return jsonResponse({ jobId: job.id as string }, 201);
-});
+}
 
 const stageStateSchema = z.enum([
   "aguardando",
@@ -106,92 +103,90 @@ function computeJobStatus(stageStates: string[]): { status: StageState; terminal
   return { status: "aguardando", terminal: false };
 }
 
-export const handleUpdateStageRequest = createServerOnlyFn(
-  async (params: { jobId: string; stage: string }): Promise<Response> => {
-    const request = getRequest();
-    if (request.method !== "POST") {
-      return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
-    }
+export async function handleUpdateStageRequest(
+  request: Request,
+  params: { jobId: string; stage: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = updateStageBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+  const patch = parsed.data;
+  const { jobId, stage } = params;
 
-    const auth = await verifyInternalRequest(request);
-    if (!auth.ok) {
-      return jsonResponse(
-        { code: "unauthorized", message: auth.errorMessage },
-        auth.errorStatus ?? 401,
-      );
-    }
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const parsed = updateStageBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
-    if (!parsed.success) {
-      return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
-    }
-    const patch = parsed.data;
-    const { jobId, stage } = params;
+  const { data: existingStage, error: findError } = await supabaseAdmin
+    .from("job_stages")
+    .select("id")
+    .eq("job_id", jobId)
+    .eq("stage", stage)
+    .maybeSingle();
+  if (findError) {
+    return jsonResponse({ code: "stage_lookup_failed", message: findError.message }, 500);
+  }
+  if (!existingStage) {
+    return jsonResponse(
+      { code: "stage_not_found", message: `Etapa "${stage}" não existe para este job.` },
+      404,
+    );
+  }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error: updateError } = await supabaseAdmin
+    .from("job_stages")
+    .update({
+      state: patch.state,
+      ...(patch.attempts !== undefined ? { attempts: patch.attempts } : {}),
+      ...(patch.startedAt !== undefined ? { started_at: patch.startedAt } : {}),
+      ...(patch.finishedAt !== undefined ? { finished_at: patch.finishedAt } : {}),
+      ...(patch.errorCode !== undefined ? { error_code: patch.errorCode } : {}),
+      ...(patch.errorMessage !== undefined ? { error_message: patch.errorMessage } : {}),
+      ...(patch.retryable !== undefined ? { retryable: patch.retryable } : {}),
+      ...(patch.preserved !== undefined ? { preserved: patch.preserved } : {}),
+    })
+    .eq("id", existingStage.id);
+  if (updateError) {
+    return jsonResponse({ code: "stage_update_failed", message: updateError.message }, 500);
+  }
 
-    const { data: existingStage, error: findError } = await supabaseAdmin
-      .from("job_stages")
-      .select("id")
-      .eq("job_id", jobId)
-      .eq("stage", stage)
-      .maybeSingle();
-    if (findError) {
-      return jsonResponse({ code: "stage_lookup_failed", message: findError.message }, 500);
-    }
-    if (!existingStage) {
-      return jsonResponse(
-        { code: "stage_not_found", message: `Etapa "${stage}" não existe para este job.` },
-        404,
-      );
-    }
+  const { data: allStages, error: allStagesError } = await supabaseAdmin
+    .from("job_stages")
+    .select("state")
+    .eq("job_id", jobId);
+  if (allStagesError || !allStages) {
+    return jsonResponse(
+      {
+        code: "stage_aggregate_failed",
+        message: allStagesError?.message ?? "Falha ao agregar etapas.",
+      },
+      500,
+    );
+  }
 
-    const { error: updateError } = await supabaseAdmin
-      .from("job_stages")
-      .update({
-        state: patch.state,
-        ...(patch.attempts !== undefined ? { attempts: patch.attempts } : {}),
-        ...(patch.startedAt !== undefined ? { started_at: patch.startedAt } : {}),
-        ...(patch.finishedAt !== undefined ? { finished_at: patch.finishedAt } : {}),
-        ...(patch.errorCode !== undefined ? { error_code: patch.errorCode } : {}),
-        ...(patch.errorMessage !== undefined ? { error_message: patch.errorMessage } : {}),
-        ...(patch.retryable !== undefined ? { retryable: patch.retryable } : {}),
-        ...(patch.preserved !== undefined ? { preserved: patch.preserved } : {}),
-      })
-      .eq("id", existingStage.id);
-    if (updateError) {
-      return jsonResponse({ code: "stage_update_failed", message: updateError.message }, 500);
-    }
+  const { status, terminal } = computeJobStatus(allStages.map((s) => s.state as string));
+  const { error: jobUpdateError } = await supabaseAdmin
+    .from("processing_jobs")
+    .update({
+      status,
+      ...(status === "processando" ? { started_at: new Date().toISOString() } : {}),
+      ...(terminal ? { finished_at: new Date().toISOString() } : {}),
+      ...(patch.errorCode !== undefined ? { error_code: patch.errorCode } : {}),
+      ...(patch.errorMessage !== undefined ? { error_message: patch.errorMessage } : {}),
+    })
+    .eq("id", jobId);
+  if (jobUpdateError) {
+    return jsonResponse({ code: "job_update_failed", message: jobUpdateError.message }, 500);
+  }
 
-    const { data: allStages, error: allStagesError } = await supabaseAdmin
-      .from("job_stages")
-      .select("state")
-      .eq("job_id", jobId);
-    if (allStagesError || !allStages) {
-      return jsonResponse(
-        {
-          code: "stage_aggregate_failed",
-          message: allStagesError?.message ?? "Falha ao agregar etapas.",
-        },
-        500,
-      );
-    }
-
-    const { status, terminal } = computeJobStatus(allStages.map((s) => s.state as string));
-    const { error: jobUpdateError } = await supabaseAdmin
-      .from("processing_jobs")
-      .update({
-        status,
-        ...(status === "processando" ? { started_at: new Date().toISOString() } : {}),
-        ...(terminal ? { finished_at: new Date().toISOString() } : {}),
-        ...(patch.errorCode !== undefined ? { error_code: patch.errorCode } : {}),
-        ...(patch.errorMessage !== undefined ? { error_message: patch.errorMessage } : {}),
-      })
-      .eq("id", jobId);
-    if (jobUpdateError) {
-      return jsonResponse({ code: "job_update_failed", message: jobUpdateError.message }, 500);
-    }
-
-    return jsonResponse({ ok: true, jobStatus: status }, 200);
-  },
-);
+  return jsonResponse({ ok: true, jobStatus: status }, 200);
+}

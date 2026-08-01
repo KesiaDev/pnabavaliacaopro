@@ -1,8 +1,6 @@
-// Server-only (sufixo .server.ts) — mesma convenção de internal-jobs.server.ts:
-// escritas privilegiadas nas tabelas de Drive (drive_connections/
-// drive_sources/sync_runs), chamadas só pelo Railway via HMAC.
-import { createServerOnlyFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+// Server-only (sufixo .server.ts). Chamado direto de src/server.ts, fora do
+// roteador do TanStack -- ver internal-jobs.server.ts pro motivo (Seroval
+// não sabe serializar um Response cru).
 import { z } from "zod";
 import { verifyInternalRequest, jsonResponse } from "@/lib/internal-auth.server";
 
@@ -13,8 +11,7 @@ const createConnectionBodySchema = z.object({
   scope: z.string().min(1),
 });
 
-export const handleCreateDriveConnection = createServerOnlyFn(async (): Promise<Response> => {
-  const request = getRequest();
+export async function handleCreateDriveConnection(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
   }
@@ -50,7 +47,7 @@ export const handleCreateDriveConnection = createServerOnlyFn(async (): Promise<
     );
   }
   return jsonResponse({ id: data.id as string }, 201);
-});
+}
 
 const createSourceBodySchema = z.object({
   connectionId: z.string().uuid(),
@@ -59,8 +56,7 @@ const createSourceBodySchema = z.object({
   folderName: z.string().nullable().optional(),
 });
 
-export const handleCreateDriveSource = createServerOnlyFn(async (): Promise<Response> => {
-  const request = getRequest();
+export async function handleCreateDriveSource(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
   }
@@ -99,7 +95,7 @@ export const handleCreateDriveSource = createServerOnlyFn(async (): Promise<Resp
     { id: data.id as string, folderName: (data.folder_name as string | null) ?? null },
     201,
   );
-});
+}
 
 const createSyncRunBodySchema = z.object({
   driveSourceId: z.string().uuid(),
@@ -108,8 +104,7 @@ const createSyncRunBodySchema = z.object({
   triggeredBy: z.string().uuid(),
 });
 
-export const handleCreateSyncRun = createServerOnlyFn(async (): Promise<Response> => {
-  const request = getRequest();
+export async function handleCreateSyncRun(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
   }
@@ -146,7 +141,7 @@ export const handleCreateSyncRun = createServerOnlyFn(async (): Promise<Response
     );
   }
   return jsonResponse({ id: data.id as string }, 201);
-});
+}
 
 const finishSyncRunBodySchema = z.object({
   status: z.enum(["concluido", "erro"]),
@@ -154,37 +149,37 @@ const finishSyncRunBodySchema = z.object({
   errorMessage: z.string().nullable().optional(),
 });
 
-export const handleFinishSyncRun = createServerOnlyFn(
-  async (params: { syncRunId: string }): Promise<Response> => {
-    const request = getRequest();
-    if (request.method !== "POST") {
-      return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
-    }
-    const auth = await verifyInternalRequest(request);
-    if (!auth.ok) {
-      return jsonResponse(
-        { code: "unauthorized", message: auth.errorMessage },
-        auth.errorStatus ?? 401,
-      );
-    }
-    const parsed = finishSyncRunBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
-    if (!parsed.success) {
-      return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
-    }
+export async function handleFinishSyncRun(
+  request: Request,
+  params: { syncRunId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = finishSyncRunBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("sync_runs")
-      .update({
-        status: parsed.data.status,
-        finished_at: new Date().toISOString(),
-        stats: parsed.data.stats ?? null,
-        error_message: parsed.data.errorMessage ?? null,
-      })
-      .eq("id", params.syncRunId);
-    if (error) {
-      return jsonResponse({ code: "sync_run_finish_failed", message: error.message }, 500);
-    }
-    return jsonResponse({ ok: true }, 200);
-  },
-);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("sync_runs")
+    .update({
+      status: parsed.data.status,
+      finished_at: new Date().toISOString(),
+      stats: parsed.data.stats ?? null,
+      error_message: parsed.data.errorMessage ?? null,
+    })
+    .eq("id", params.syncRunId);
+  if (error) {
+    return jsonResponse({ code: "sync_run_finish_failed", message: error.message }, 500);
+  }
+  return jsonResponse({ ok: true }, 200);
+}
