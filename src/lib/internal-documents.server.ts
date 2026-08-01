@@ -312,3 +312,78 @@ export async function handleSaveDocumentChunks(request: Request): Promise<Respon
   }
   return jsonResponse({ ok: true, saved: rows.length }, 200);
 }
+
+export async function handleListChunksNeedingEmbedding(
+  request: Request,
+  params: { proponentId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // Idempotente: chunk_embeddings.chunk_id é unique, "!left" + is null é o
+  // jeito do PostgREST fazer "onde ainda não existe embedding".
+  const { data, error } = await supabaseAdmin
+    .from("document_chunks")
+    .select("id, texto, chunk_embeddings!left(id)")
+    .eq("proponent_id", params.proponentId)
+    .is("chunk_embeddings.id", null);
+  if (error) {
+    return jsonResponse({ code: "list_failed", message: error.message }, 500);
+  }
+
+  const chunks = (data ?? []).map((c) => ({ chunkId: c.id as string, texto: c.texto as string }));
+  return jsonResponse({ chunks }, 200);
+}
+
+const saveChunkEmbeddingBodySchema = z.object({
+  embedding: z.array(z.number()).min(1),
+  modelo: z.string().min(1),
+});
+
+export async function handleSaveChunkEmbedding(
+  request: Request,
+  params: { chunkId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = saveChunkEmbeddingBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // pgvector via PostgREST espera a representação textual "[1,2,3]" (mesmo
+  // formato de I/O nativo do tipo vector) -- o tipo gerado pra essa coluna é
+  // string, não number[], por isso a conversão explícita aqui.
+  const embeddingText = `[${parsed.data.embedding.join(",")}]`;
+
+  const { error } = await supabaseAdmin.from("chunk_embeddings").upsert(
+    {
+      chunk_id: params.chunkId,
+      embedding: embeddingText,
+      modelo: parsed.data.modelo,
+    },
+    { onConflict: "chunk_id" },
+  );
+  if (error) {
+    return jsonResponse({ code: "save_failed", message: error.message }, 500);
+  }
+  return jsonResponse({ ok: true }, 200);
+}

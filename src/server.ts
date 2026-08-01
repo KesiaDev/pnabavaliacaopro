@@ -88,6 +88,14 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleSaveDocumentChunks } = await import("./lib/internal-documents.server");
     return handleSaveDocumentChunks(request);
   }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "chunks-needing-embedding") {
+    const { handleListChunksNeedingEmbedding } = await import("./lib/internal-documents.server");
+    return handleListChunksNeedingEmbedding(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "document-chunks" && rest[2] === "embedding") {
+    const { handleSaveChunkEmbedding } = await import("./lib/internal-documents.server");
+    return handleSaveChunkEmbedding(request, { chunkId: rest[1] });
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
