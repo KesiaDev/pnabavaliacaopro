@@ -211,3 +211,104 @@ export async function handleSaveDocumentPageImage(
 
   return jsonResponse({ ok: true }, 200);
 }
+
+export async function handleListDocumentPages(
+  request: Request,
+  params: { proponentId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("document_pages")
+    .select("file_id, file_version_id, numero_pagina, texto, files!inner(proponent_id)")
+    .eq("files.proponent_id", params.proponentId);
+  if (error) {
+    return jsonResponse({ code: "list_failed", message: error.message }, 500);
+  }
+
+  const pages = (data ?? []).map((p) => ({
+    fileId: p.file_id as string,
+    fileVersionId: p.file_version_id as string,
+    numeroPagina: p.numero_pagina as number,
+    texto: p.texto as string,
+  }));
+  return jsonResponse({ pages }, 200);
+}
+
+const chunkInputSchema = z.object({
+  paginaInicial: z.number().int().positive(),
+  paginaFinal: z.number().int().positive(),
+  ordem: z.number().int().nonnegative(),
+  texto: z.string().min(1),
+  tokensEstimados: z.number().int().nonnegative(),
+});
+
+const saveDocumentChunksBodySchema = z.object({
+  fileId: z.string().uuid(),
+  fileVersionId: z.string().uuid(),
+  chunks: z.array(chunkInputSchema).min(1),
+});
+
+export async function handleSaveDocumentChunks(request: Request): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = saveDocumentChunksBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { fileId, fileVersionId, chunks } = parsed.data;
+
+  // proponent_id vem do arquivo (document_chunks não recebe isso do Worker
+  // -- o Worker só conhece fileId/fileVersionId, nunca escreve
+  // proponent_id "adivinhado").
+  const { data: file, error: fileError } = await supabaseAdmin
+    .from("files")
+    .select("proponent_id")
+    .eq("id", fileId)
+    .single();
+  if (fileError || !file) {
+    return jsonResponse(
+      { code: "file_not_found", message: fileError?.message ?? "Arquivo não encontrado." },
+      404,
+    );
+  }
+
+  const rows = chunks.map((c) => ({
+    proponent_id: file.proponent_id,
+    file_id: fileId,
+    file_version_id: fileVersionId,
+    pagina_inicial: c.paginaInicial,
+    pagina_final: c.paginaFinal,
+    ordem: c.ordem,
+    texto: c.texto,
+    tokens_estimados: c.tokensEstimados,
+  }));
+
+  const { error } = await supabaseAdmin
+    .from("document_chunks")
+    .upsert(rows, { onConflict: "file_version_id,ordem" });
+  if (error) {
+    return jsonResponse({ code: "save_failed", message: error.message }, 500);
+  }
+  return jsonResponse({ ok: true, saved: rows.length }, 200);
+}
