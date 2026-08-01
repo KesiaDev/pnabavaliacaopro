@@ -190,3 +190,100 @@ export async function handleUpdateStageRequest(
 
   return jsonResponse({ ok: true, jobStatus: status }, 200);
 }
+
+// Cancelamento é best-effort: marca o job e as etapas ainda não terminais
+// como "cancelado" no banco, mas não tem como abortar um processo já
+// rodando no Worker no meio de uma chamada (Poppler/OpenAI/etc) -- se essa
+// etapa terminar depois disso, ela ainda vai reportar seu próprio resultado
+// via updateStage. Suficiente pra destravar um job "fantasma" (ver
+// enqueueFirstStage no Railway): normalmente cancelado porque nunca chegou
+// a rodar de verdade, não porque estava em andamento.
+export async function handleCancelJob(
+  request: Request,
+  params: { jobId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error: stagesError } = await supabaseAdmin
+    .from("job_stages")
+    .update({ state: "cancelado", finished_at: new Date().toISOString() })
+    .eq("job_id", params.jobId)
+    .in("state", ["aguardando", "na_fila", "processando"]);
+  if (stagesError) {
+    return jsonResponse({ code: "stages_cancel_failed", message: stagesError.message }, 500);
+  }
+
+  const { error: jobError } = await supabaseAdmin
+    .from("processing_jobs")
+    .update({ status: "cancelado", finished_at: new Date().toISOString() })
+    .eq("id", params.jobId);
+  if (jobError) {
+    return jsonResponse({ code: "job_cancel_failed", message: jobError.message }, 500);
+  }
+
+  return jsonResponse({ ok: true }, 200);
+}
+
+// Reseta uma etapa específica pra "na_fila" (limpa erro/tentativas) --
+// chamado antes do Railway reenfileirar essa etapa no BullMQ. Usado tanto
+// por "Repetir etapa" (etapa explícita) quanto por "Repetir" no nível do
+// job (Railway resolve qual é a primeira etapa não concluída e chama isso
+// pra ela).
+const resetStageParamsSchema = z.object({ stage: z.enum(PROCESSING_STAGES) });
+
+export async function handleResetStage(
+  request: Request,
+  params: { jobId: string; stage: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsedParams = resetStageParamsSchema.safeParse({ stage: params.stage });
+  if (!parsedParams.success) {
+    return jsonResponse({ code: "invalid_params", message: parsedParams.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error: stageError } = await supabaseAdmin
+    .from("job_stages")
+    .update({
+      state: "na_fila",
+      attempts: 0,
+      error_code: null,
+      error_message: null,
+      started_at: null,
+      finished_at: null,
+    })
+    .eq("job_id", params.jobId)
+    .eq("stage", params.stage);
+  if (stageError) {
+    return jsonResponse({ code: "stage_reset_failed", message: stageError.message }, 500);
+  }
+
+  const { error: jobError } = await supabaseAdmin
+    .from("processing_jobs")
+    .update({ status: "na_fila", finished_at: null, error_code: null, error_message: null })
+    .eq("id", params.jobId);
+  if (jobError) {
+    return jsonResponse({ code: "job_reset_failed", message: jobError.message }, 500);
+  }
+
+  return jsonResponse({ ok: true }, 200);
+}

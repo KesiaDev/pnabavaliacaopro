@@ -40,6 +40,14 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleUpdateStageRequest } = await import("./lib/internal-jobs.server");
     return handleUpdateStageRequest(request, { jobId: rest[1], stage: rest[3] });
   }
+  if (rest.length === 3 && rest[0] === "jobs" && rest[2] === "cancel") {
+    const { handleCancelJob } = await import("./lib/internal-jobs.server");
+    return handleCancelJob(request, { jobId: rest[1] });
+  }
+  if (rest.length === 5 && rest[0] === "jobs" && rest[2] === "stages" && rest[4] === "reset") {
+    const { handleResetStage } = await import("./lib/internal-jobs.server");
+    return handleResetStage(request, { jobId: rest[1], stage: rest[3] });
+  }
   if (rest.length === 1 && rest[0] === "drive-connections") {
     const { handleCreateDriveConnection } = await import("./lib/internal-drive.server");
     return handleCreateDriveConnection(request);
