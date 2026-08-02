@@ -120,6 +120,10 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleSaveTipoProponente } = await import("./lib/internal-evaluation.server");
     return handleSaveTipoProponente(request, { proponentId: rest[1] });
   }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "project-title") {
+    const { handleSaveProjectTitle } = await import("./lib/internal-evaluation.server");
+    return handleSaveProjectTitle(request, { proponentId: rest[1] });
+  }
   if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "evidence") {
     const { handleSaveEvidence } = await import("./lib/internal-evaluation.server");
     return handleSaveEvidence(request, { proponentId: rest[1] });

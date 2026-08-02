@@ -34,11 +34,20 @@ export const generateFichaFn = createServerFn({ method: "POST" })
     const supabase = context.supabase;
     const proponentId = data.proponentId;
 
-    const { data: proponent, error: proponentError } = await supabase
+    // nome_projeto (migration 20260802130000) ainda não está no tipo gerado
+    // do Supabase -- cast do resultado até a próxima regeneração de
+    // types.ts, mesmo padrão já usado em internal-evaluation.server.ts.
+    const { data: proponentRaw, error: proponentError } = await supabase
       .from("proponents")
-      .select("nome_canonico, tipo_proponente, edital_id")
+      .select("nome_canonico, tipo_proponente, edital_id, nome_projeto")
       .eq("id", proponentId)
       .single();
+    const proponent = proponentRaw as unknown as {
+      nome_canonico: string;
+      tipo_proponente: "pessoa_fisica" | "pessoa_juridica_ou_coletivo" | null;
+      edital_id: string | null;
+      nome_projeto: string | null;
+    } | null;
     if (proponentError || !proponent) throw new Error("Proponente não encontrado.");
     if (!proponent.tipo_proponente) {
       throw new Error(
@@ -92,10 +101,11 @@ export const generateFichaFn = createServerFn({ method: "POST" })
 
       const { buildFichaOdtEdital120 } = await import("@/lib/ficha-generator.server");
       const buffer = buildFichaOdtEdital120({
-        // O formulário de inscrição tem um campo de título do projeto, mas a
-        // plataforma ainda não extrai esse dado dos documentos -- fica em
-        // branco na ficha pra preenchimento manual, em vez de adivinhar.
-        nomeProjeto: null,
+        // Extraído automaticamente pelo agente bonus_h_j a partir do
+        // formulário de inscrição -- fica em branco se o agente não
+        // encontrar um campo de título explícito (nunca adivinha a partir
+        // da descrição do projeto).
+        nomeProjeto: proponent.nome_projeto,
         nomeProponente: proponent.nome_canonico,
         tipoProponente: proponent.tipo_proponente,
         scores,

@@ -197,6 +197,44 @@ export async function handleSaveTipoProponente(
   return jsonResponse({ ok: true }, 200);
 }
 
+const saveProjectTitleBodySchema = z.object({
+  titulo: z.string().trim().min(1),
+});
+
+export async function handleSaveProjectTitle(
+  request: Request,
+  params: { proponentId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = saveProjectTitleBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // O tipo gerado do Supabase ainda não conhece a coluna nome_projeto
+  // (migration 20260802130000, aplicada depois da última geração de
+  // types.ts) -- cast temporário até a próxima regeneração, mesmo padrão já
+  // usado pra match_document_chunks acima.
+  const { error } = await supabaseAdmin
+    .from("proponents")
+    .update({ nome_projeto: parsed.data.titulo } as never)
+    .eq("id", params.proponentId);
+  if (error) {
+    return jsonResponse({ code: "save_failed", message: error.message }, 500);
+  }
+  return jsonResponse({ ok: true }, 200);
+}
+
 const evidenceInputSchema = z.object({
   criterion: z.string(),
   fileId: z.string().uuid().nullable(),
