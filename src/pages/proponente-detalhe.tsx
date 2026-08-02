@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEditalContext } from "@/contexts/edital-context";
+import { useEditalCriteria } from "@/lib/queries/editais";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,22 +59,20 @@ import {
   Users,
 } from "lucide-react";
 
-
-const CRITERION_LABEL: Record<string, string> = {
-  A: "Tempo de atuação em Caxias do Sul",
-  B: "Reconhecida atuação na categoria cultural",
-  C: "Integração e inovação",
-  D: "Atuação com grupos e temáticas sociais",
-  E: "Contribuição comunitária",
-  F: "Bônus territorial",
-  G: "Bônus de ação afirmativa",
-};
-
 export function ProponentDetail({ id }: { id: string }) {
   const { editalId } = useEditalContext();
   const base = `/editais/${editalId}`;
   const { data: p, isLoading } = useProponent(id);
   const { data: scores } = useCriterionScores(id);
+  // Título de cada critério vem do edital real (edital_criteria), nunca
+  // hard-coded -- cada edital define seus próprios critérios (ver Anexo III
+  // do Edital 120/2026, diferente do 119). O código da letra (ex: "Critério
+  // A") é o fallback enquanto isso ainda não carregou.
+  const { data: criteria } = useEditalCriteria(editalId);
+  const criterionLabel = useMemo(() => {
+    const map = new Map((criteria ?? []).map((c) => [c.code, c.title]));
+    return (code: string) => map.get(code) ?? `Critério ${code}`;
+  }, [criteria]);
   const updateScore = useUpdateCriterionScore(id);
   const approveEvaluation = useApproveEvaluation(id);
   const runAgents = useRunAgentPipeline(id);
@@ -136,7 +135,7 @@ export function ProponentDetail({ id }: { id: string }) {
 
       <Tabs defaultValue="avaliacao" className="space-y-6">
         <TabsList className="bg-secondary">
-          <TabsTrigger value="avaliacao">Avaliação A–G</TabsTrigger>
+          <TabsTrigger value="avaliacao">Avaliação</TabsTrigger>
           <TabsTrigger value="dossie">Dossiê e arquivos</TabsTrigger>
           <TabsTrigger value="evidencias">Matriz de evidências</TabsTrigger>
           <TabsTrigger value="parecer">Minuta de parecer</TabsTrigger>
@@ -217,6 +216,7 @@ export function ProponentDetail({ id }: { id: string }) {
               <CriterionRow
                 key={c.id}
                 data={c}
+                label={criterionLabel(c.criterion)}
                 saving={updateScore.isPending}
                 onSave={(patch) => updateScore.mutate({ id: c.id, ...patch })}
               />
@@ -346,10 +346,12 @@ function ScoreOverview({
 
 function CriterionRow({
   data,
+  label,
   onSave,
   saving,
 }: {
   data: CriterionScoreRow;
+  label: string;
   onSave: (patch: {
     approved_score: number | null;
     human_review_required: boolean;
@@ -380,7 +382,7 @@ function CriterionRow({
           <div className="font-serif text-3xl text-primary text-center">{data.criterion}</div>
           <div className="min-w-0">
             <div className="flex items-baseline justify-between gap-3">
-              <div className="font-medium">{CRITERION_LABEL[data.criterion]}</div>
+              <div className="font-medium">{label}</div>
               <div className="text-xs text-muted-foreground">máx. {data.max_score}</div>
             </div>
             {editingText ? (
@@ -664,7 +666,7 @@ function EvidenceTable({ proponentId }: { proponentId: string }) {
   if (rows.length === 0) {
     return (
       <div className="text-sm text-muted-foreground">
-        Nenhuma evidência ainda — clique em "Executar agentes" na aba Avaliação A–G.
+        Nenhuma evidência ainda — clique em "Executar agentes" na aba Avaliação.
       </div>
     );
   }
@@ -799,7 +801,7 @@ function ParecerTab({
           <div className="text-sm text-muted-foreground">
             {exportReady
               ? 'Nenhuma minuta ainda — clique em "Gerar minuta" acima.'
-              : 'A minuta é gerada automaticamente ao clicar em "Aprovar avaliação" (aba Avaliação A–G), com as notas finais já definidas.'}
+              : 'A minuta é gerada automaticamente ao clicar em "Aprovar avaliação" (aba Avaliação), com as notas finais já definidas.'}
           </div>
         )}
         {generateParecer.isError && (
