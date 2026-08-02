@@ -104,6 +104,50 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleSaveChunkEmbedding } = await import("./lib/internal-documents.server");
     return handleSaveChunkEmbedding(request, { chunkId: rest[1] });
   }
+  if (rest.length === 3 && rest[0] === "editais" && rest[2] === "criteria") {
+    const { handleGetEditalCriteria } = await import("./lib/internal-evaluation.server");
+    return handleGetEditalCriteria(request, { editalId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "match-chunks") {
+    const { handleMatchDocumentChunks } = await import("./lib/internal-evaluation.server");
+    return handleMatchDocumentChunks(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "info") {
+    const { handleGetProponentInfo } = await import("./lib/internal-evaluation.server");
+    return handleGetProponentInfo(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "tipo") {
+    const { handleSaveTipoProponente } = await import("./lib/internal-evaluation.server");
+    return handleSaveTipoProponente(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "evidence") {
+    const { handleSaveEvidence } = await import("./lib/internal-evaluation.server");
+    return handleSaveEvidence(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "criterion-scores") {
+    const { handleSaveCriterionScores } = await import("./lib/internal-evaluation.server");
+    return handleSaveCriterionScores(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "flags") {
+    const { handleSaveFlag } = await import("./lib/internal-evaluation.server");
+    return handleSaveFlag(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 1 && rest[0] === "cost-entries") {
+    const { handleSaveCostEntry } = await import("./lib/internal-evaluation.server");
+    return handleSaveCostEntry(request);
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "evaluation-context") {
+    const { handleGetEvaluationContext } = await import("./lib/internal-evaluation.server");
+    return handleGetEvaluationContext(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "cycle1-match") {
+    const { handleCheckCycle1Match } = await import("./lib/internal-evaluation.server");
+    return handleCheckCycle1Match(request, { proponentId: rest[1] });
+  }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "parecer") {
+    const { handleSaveParecer } = await import("./lib/internal-evaluation.server");
+    return handleSaveParecer(request, { proponentId: rest[1] });
+  }
 
   return new Response(
     JSON.stringify({ code: "not_found", message: "Endpoint interno inválido." }),
