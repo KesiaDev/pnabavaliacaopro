@@ -1,0 +1,2 @@
+revoke execute on function public.match_document_chunks(uuid, extensions.vector, integer) from public, anon, authenticated;
+grant execute on function public.match_document_chunks(uuid, extensions.vector, integer) to service_role;

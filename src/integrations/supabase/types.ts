@@ -1683,6 +1683,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      match_document_chunks: {
+        Args: {
+          p_match_count?: number
+          p_proponent_id: string
+          p_query_embedding: string
+        }
+        Returns: {
+          file_id: string
+          id: string
+          pagina_final: number
+          pagina_inicial: number
+          similarity: number
+          texto: string
+        }[]
+      }
     }
     Enums: {
       app_role:
