@@ -102,8 +102,7 @@ export function useStartProcessing(editalId: string | undefined) {
       requireApi();
       return applicationsApi.process(applicationId);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
   });
 }
 
@@ -114,8 +113,7 @@ export function useCancelProcessing(editalId: string | undefined) {
       requireApi();
       return applicationsApi.cancel(applicationId);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
   });
 }
 
@@ -126,8 +124,7 @@ export function useRetryProcessing(editalId: string | undefined) {
       requireApi();
       return applicationsApi.retry(applicationId);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
   });
 }
 
@@ -138,7 +135,112 @@ export function useRetryStage(editalId: string | undefined) {
       requireApi();
       return jobsApi.retryStage(input.jobId, input.stage);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") }),
+  });
+}
+
+// Status agregado do trabalho mais recente de um proponente -- resume os 7
+// estados por etapa (job_stage_state) num vocabulário de painel: nunca
+// processado, rodando, terminou bem, terminou com erro, ou foi cancelado.
+export type OverallProcessingStatus =
+  "nao_iniciado" | "em_andamento" | "concluido" | "falhou" | "cancelado";
+
+function classifyOverallStatus(status: StageState): OverallProcessingStatus {
+  switch (status) {
+    case "concluido":
+      return "concluido";
+    case "falhou":
+      return "falhou";
+    case "cancelado":
+      return "cancelado";
+    default:
+      return "em_andamento"; // aguardando | na_fila | processando | revisao
+  }
+}
+
+export interface ProponentProcessingStatus {
+  proponentId: string;
+  jobId: string | null;
+  status: OverallProcessingStatus;
+  updatedAt: string | null;
+}
+
+// Visão de todos os proponentes do edital de uma vez -- sem isso, a única
+// forma de saber em que pé cada um está era clicar em cada nome, um por
+// um, na lista à esquerda. Uma consulta só, nunca 44.
+export function useProcessingOverview(editalId: string | undefined) {
+  return useQuery({
+    queryKey: editalScopedKey(editalId, "processing-overview"),
+    enabled: !!editalId,
+    queryFn: async (): Promise<Map<string, ProponentProcessingStatus>> => {
+      const { data, error } = await supabase
+        .from("processing_jobs")
+        .select("id, proponent_id, status, updated_at")
+        .eq("edital_id", editalId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      // A mesma consulta ordenada por created_at desc: a primeira linha
+      // que aparecer pra cada proponente já é a mais recente -- não
+      // precisa reprocessar se já vimos aquele proponente antes.
+      const byProponent = new Map<string, ProponentProcessingStatus>();
+      for (const row of (data as JobRow[]) ?? []) {
+        if (!row.proponent_id || byProponent.has(row.proponent_id)) continue;
+        byProponent.set(row.proponent_id, {
+          proponentId: row.proponent_id,
+          jobId: row.id,
+          status: classifyOverallStatus(row.status as StageState),
+          updatedAt: row.updated_at,
+        });
+      }
+      return byProponent;
+    },
+  });
+}
+
+export interface BatchStartResult {
+  succeeded: string[];
+  failed: { proponentId: string; message: string }[];
+}
+
+// Concorrência limitada de propósito: 44 disparos simultâneos batendo no
+// Railway/OpenAI ao mesmo tempo é desnecessário (cada proponente já roda
+// suas 12 etapas em fila, sem pressa) e arrisca esbarrar em limite de taxa
+// da própria OpenAI -- um pool pequeno evita isso sem deixar o lote lento.
+const BATCH_CONCURRENCY = 4;
+
+export function useBatchStartProcessing(editalId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (applicationIds: string[]): Promise<BatchStartResult> => {
+      requireApi();
+      const result: BatchStartResult = { succeeded: [], failed: [] };
+      const queue = [...applicationIds];
+
+      async function worker() {
+        while (queue.length > 0) {
+          const id = queue.shift();
+          if (!id) return;
+          try {
+            await applicationsApi.process(id);
+            result.succeeded.push(id);
+          } catch (err) {
+            result.failed.push({
+              proponentId: id,
+              message: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+      }
+
+      await Promise.all(
+        Array.from({ length: Math.min(BATCH_CONCURRENCY, applicationIds.length) }, worker),
+      );
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "processing-overview") });
+      queryClient.invalidateQueries({ queryKey: editalScopedKey(editalId, "job") });
+    },
   });
 }
