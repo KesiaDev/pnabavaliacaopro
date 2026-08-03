@@ -87,10 +87,11 @@ export async function handleMatchDocumentChunks(
   // o tipo gerado do Supabase só conhece as funções que existiam quando
   // types.ts foi gerado pela última vez, por isso o cast: a chamada em si
   // já foi validada manualmente contra a assinatura real da função (ver
-  // supabase/migrations/20260802121000_match_document_chunks.sql).
+  // supabase/migrations/20260803090000_match_chunks_file_nome.sql).
   type MatchDocumentChunksRow = {
     id: string;
     file_id: string;
+    file_nome: string;
     pagina_inicial: number;
     pagina_final: number;
     texto: string;
@@ -113,6 +114,7 @@ export async function handleMatchDocumentChunks(
   const chunks = rows.map((r) => ({
     chunkId: r.id,
     fileId: r.file_id,
+    fileNome: r.file_nome,
     paginaInicial: r.pagina_inicial,
     paginaFinal: r.pagina_final,
     texto: r.texto,
