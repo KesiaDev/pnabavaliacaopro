@@ -1390,6 +1390,7 @@ export type Database = {
           edital_id: string | null
           id: string
           nome_canonico: string
+          nome_projeto: string | null
           status: Database["public"]["Enums"]["proponent_status"]
           tipo_proponente: Database["public"]["Enums"]["tipo_proponente"] | null
         }
@@ -1402,6 +1403,7 @@ export type Database = {
           edital_id?: string | null
           id?: string
           nome_canonico: string
+          nome_projeto?: string | null
           status?: Database["public"]["Enums"]["proponent_status"]
           tipo_proponente?:
             | Database["public"]["Enums"]["tipo_proponente"]
@@ -1416,6 +1418,7 @@ export type Database = {
           edital_id?: string | null
           id?: string
           nome_canonico?: string
+          nome_projeto?: string | null
           status?: Database["public"]["Enums"]["proponent_status"]
           tipo_proponente?:
             | Database["public"]["Enums"]["tipo_proponente"]

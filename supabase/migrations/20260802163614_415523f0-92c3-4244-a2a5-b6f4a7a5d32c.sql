@@ -1,0 +1,1 @@
+alter table public.proponents add column if not exists nome_projeto text;
