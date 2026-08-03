@@ -140,6 +140,10 @@ async function handleInternalApi(request: Request): Promise<Response | null> {
     const { handleSaveCostEntry } = await import("./lib/internal-evaluation.server");
     return handleSaveCostEntry(request);
   }
+  if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "cost-status") {
+    const { handleGetCostStatus } = await import("./lib/internal-evaluation.server");
+    return handleGetCostStatus(request, { proponentId: rest[1] });
+  }
   if (rest.length === 3 && rest[0] === "proponents" && rest[2] === "evaluation-context") {
     const { handleGetEvaluationContext } = await import("./lib/internal-evaluation.server");
     return handleGetEvaluationContext(request, { proponentId: rest[1] });

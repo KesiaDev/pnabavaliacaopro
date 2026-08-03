@@ -411,6 +411,7 @@ const costEntryBodySchema = z.object({
   stage: z.string().min(1),
   model: z.string().min(1),
   inputTokens: z.number().int().nonnegative(),
+  cachedTokens: z.number().int().nonnegative().optional(),
   outputTokens: z.number().int().nonnegative(),
   cost: z.number().nonnegative(),
 });
@@ -438,6 +439,7 @@ export async function handleSaveCostEntry(request: Request): Promise<Response> {
     stage: parsed.data.stage,
     model: parsed.data.model,
     input_tokens: parsed.data.inputTokens,
+    cached_tokens: parsed.data.cachedTokens ?? 0,
     output_tokens: parsed.data.outputTokens,
     cost: parsed.data.cost,
   });
@@ -445,6 +447,68 @@ export async function handleSaveCostEntry(request: Request): Promise<Response> {
     return jsonResponse({ code: "save_failed", message: error.message }, 500);
   }
   return jsonResponse({ ok: true }, 200);
+}
+
+const costStatusBodySchema = z.object({
+  editalId: z.string().uuid(),
+});
+
+// ADR-10: custo checado antes de cada chamada à OpenAI, não só registrado
+// depois. O Worker (Railway) chama isto antes de qualquer etapa que gaste
+// dinheiro, pra decidir se bloqueia -- nunca decide sozinho: lê
+// edital_costs (configurado na aba Custos) e soma cost_entries já
+// registrados, do mesmo jeito que a própria tela de Custos calcula.
+export async function handleGetCostStatus(
+  request: Request,
+  params: { proponentId: string },
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return jsonResponse({ code: "method_not_allowed", message: "Use POST." }, 405);
+  }
+  const auth = await verifyInternalRequest(request);
+  if (!auth.ok) {
+    return jsonResponse(
+      { code: "unauthorized", message: auth.errorMessage },
+      auth.errorStatus ?? 401,
+    );
+  }
+  const parsed = costStatusBodySchema.safeParse(JSON.parse(auth.body ?? "{}"));
+  if (!parsed.success) {
+    return jsonResponse({ code: "invalid_body", message: parsed.error.message }, 400);
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [{ data: config }, { data: entries, error }] = await Promise.all([
+    supabaseAdmin
+      .from("edital_costs")
+      .select("budget_total, limit_per_application, block_on_exceed")
+      .eq("edital_id", parsed.data.editalId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("cost_entries")
+      .select("proponent_id, cost")
+      .eq("edital_id", parsed.data.editalId),
+  ]);
+  if (error) {
+    return jsonResponse({ code: "list_failed", message: error.message }, 500);
+  }
+
+  const rows = entries ?? [];
+  const editalConsumed = rows.reduce((acc, r) => acc + Number(r.cost ?? 0), 0);
+  const applicationConsumed = rows
+    .filter((r) => r.proponent_id === params.proponentId)
+    .reduce((acc, r) => acc + Number(r.cost ?? 0), 0);
+
+  return jsonResponse(
+    {
+      budgetTotal: Number(config?.budget_total ?? 0),
+      editalConsumed,
+      limitPerApplication: Number(config?.limit_per_application ?? 0),
+      applicationConsumed,
+      blockOnExceed: config?.block_on_exceed ?? true,
+    },
+    200,
+  );
 }
 
 export async function handleGetEvaluationContext(
