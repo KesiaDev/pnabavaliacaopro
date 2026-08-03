@@ -232,7 +232,38 @@ function setEmptyCell120(xml: string, cellStyle: string, pStyle: string, value: 
 }
 
 const PARECER_HEADING_MARKER_120 = "AVALIADOR(A):</text:span></text:p>";
-const PARECER_PARAGRAPH_STYLE_120 = "P254";
+
+// O estilo de parágrafo "P254" reservado pra essas linhas no molde vem com
+// fo:text-transform="uppercase" (usado só pra caber texto vazio antes) --
+// preenchendo com ele, o texto todo sai em CAIXA ALTA e sem espaço entre
+// parágrafos (sem margem inferior). Em vez de reaproveitar esse estilo,
+// injetamos dois estilos próprios (corpo em caixa normal e espaçado;
+// cabeçalho de critério em negrito e caixa alta) no bloco de
+// automatic-styles do próprio documento.
+const PARECER_STYLE_DEFS =
+  '<style:style style:name="ParecerCorpo120" style:family="paragraph" style:parent-style-name="Standard">' +
+  '<style:paragraph-properties fo:text-align="justify" fo:line-height="115%" fo:margin-bottom="0.3cm"/>' +
+  '<style:text-properties style:font-name="Arial" fo:color="#000000" fo:font-size="11pt"/>' +
+  "</style:style>" +
+  '<style:style style:name="ParecerTitulo120" style:family="paragraph" style:parent-style-name="Standard">' +
+  '<style:paragraph-properties fo:margin-top="0.15cm" fo:margin-bottom="0.1cm"/>' +
+  '<style:text-properties style:font-name="Arial" fo:color="#000000" fo:font-size="11pt" fo:font-weight="bold" fo:text-transform="uppercase"/>' +
+  "</style:style>";
+
+function injectParecerStyles120(xml: string): string {
+  const anchor = "<office:automatic-styles>";
+  const idx = xml.indexOf(anchor);
+  if (idx === -1) {
+    throw new Error("Modelo da ficha (Edital 120) mudou: automatic-styles não encontrado.");
+  }
+  return xml.slice(0, idx + anchor.length) + PARECER_STYLE_DEFS + xml.slice(idx + anchor.length);
+}
+
+// Um parágrafo é tratado como cabeçalho de critério (curto, no padrão
+// "Critério X") quando é exatamente isso -- nunca por conter a palavra em
+// algum lugar no meio de um parágrafo mais longo, pra não confundir texto
+// corrido que cite um critério de passagem.
+const CRITERIA_HEADING_RE = /^Crit[ée]rio\s+[A-Z]$/i;
 
 // O molde do 120 não tem um marcador único de "linha do parecer" como o
 // T26 do 119 (uma única linha pontilhada gigante) -- em vez disso reserva um
@@ -264,18 +295,19 @@ function setParecerEdital120(xml: string, paragrafos: string[]): string {
 
   const replacement = paragrafos
     .filter((p) => p.trim().length > 0)
-    .map(
-      (p) =>
-        `<text:p text:style-name="${PARECER_PARAGRAPH_STYLE_120}">${escapeXml(p.trim())}</text:p>`,
-    )
+    .map((p) => {
+      const trimmed = p.trim();
+      const style = CRITERIA_HEADING_RE.test(trimmed) ? "ParecerTitulo120" : "ParecerCorpo120";
+      return `<text:p text:style-name="${style}">${escapeXml(trimmed)}</text:p>`;
+    })
     .join("");
   return xml.slice(0, blockStart) + replacement + xml.slice(blockEnd);
 }
 
 // A linha de assinatura já vem como "________________________________" no
 // molde (impressa pra assinar por cima) -- igual ao 119, substituímos esse
-// trecho pelo nome da avaliadora, e os rótulos fixos abaixo ("Nome do(a)
-// avaliador(a)", "Assinatura") não são tocados.
+// trecho pelo nome da avaliadora, e o rótulo "Assinatura" abaixo não é
+// tocado.
 function setSignatureNameEdital120(xml: string, nome: string): string {
   const match = xml.match(/<text:span text:style-name="([^"]+)">(_{10,})<\/text:span>/);
   if (!match || match.index === undefined) {
@@ -284,6 +316,18 @@ function setSignatureNameEdital120(xml: string, nome: string): string {
   const style = match[1];
   const replacement = `<text:span text:style-name="${style}">${escapeXml(nome)}</text:span>`;
   return xml.slice(0, match.index) + replacement + xml.slice(match.index + match[0].length);
+}
+
+// O molde da SMC traz o rótulo com forma neutra "Nome do(a) avaliador(a)"
+// -- esta plataforma é de uso exclusivo desta avaliadora (mulher), então o
+// rótulo sai sempre na forma feminina.
+function setSignatureLabelEdital120(xml: string): string {
+  const marker = "Nome do(a) avaliador(a)";
+  const idx = xml.indexOf(marker);
+  if (idx === -1) {
+    throw new Error("Modelo da ficha (Edital 120) mudou: rótulo de assinatura não encontrado.");
+  }
+  return xml.slice(0, idx) + "Nome da avaliadora" + xml.slice(idx + marker.length);
 }
 
 export function buildFichaOdtEdital120(params: BuildFichaEdital120Params): Buffer {
@@ -295,6 +339,7 @@ export function buildFichaOdtEdital120(params: BuildFichaEdital120Params): Buffe
     throw new Error("Arquivo modelo inválido: content.xml não encontrado no .odt.");
 
   let xml = new TextDecoder("utf-8").decode(contentBytes);
+  xml = injectParecerStyles120(xml);
 
   if (params.nomeProjeto) {
     xml = setEmptyCell120(xml, "TableCell13", "P14", params.nomeProjeto);
@@ -325,6 +370,7 @@ export function buildFichaOdtEdital120(params: BuildFichaEdital120Params): Buffe
   const paragrafos = params.parecerTexto.split(/\n{1,}/);
   xml = setParecerEdital120(xml, paragrafos);
   xml = setSignatureNameEdital120(xml, AVALIADORA_NOME);
+  xml = setSignatureLabelEdital120(xml);
 
   const outFiles: Record<
     string,
