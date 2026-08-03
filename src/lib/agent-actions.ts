@@ -262,15 +262,7 @@ export const approveEvaluationByAgentsFn = createServerFn({ method: "POST" })
       .eq("id", proponentId);
     if (statusError) throw new Error("Não foi possível atualizar o status do proponente.");
 
-    let parecerError: string | null = null;
-    try {
-      const { runAgent8 } = await import("@/lib/agents/agent8-auditor.server");
-      await runAgent8(supabase, proponentId, context.userId);
-    } catch (err) {
-      parecerError = err instanceof Error ? err.message : String(err);
-    }
-
-    return { parecerError };
+    return { ok: true as const };
   });
 
 export const reopenEvaluationFn = createServerFn({ method: "POST" })
@@ -287,17 +279,4 @@ export const reopenEvaluationFn = createServerFn({ method: "POST" })
       .eq("proponent_id", data.proponentId);
 
     return { ok: true as const };
-  });
-
-// Agente 8 (Auditor e Relator) roda separado do restante do squad — só depois
-// que todos os critérios têm nota proposta pelos agentes e nenhuma pendência
-// aberta. Ele não cria nota: apenas redige a partir das notas já aprovadas.
-export const generateParecerFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((data: { proponentId: string }) => data)
-  .handler(async ({ context, data }) => {
-    const { getAuthorizedAdminSupabase } = await import("@/lib/agent-actions.server");
-    const supabase = await getAuthorizedAdminSupabase(context.supabase, context.userId);
-    const { runAgent8 } = await import("@/lib/agents/agent8-auditor.server");
-    return runAgent8(supabase, data.proponentId, context.userId);
   });

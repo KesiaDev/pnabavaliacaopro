@@ -5,7 +5,6 @@ import type { Tables, TablesInsert, Enums } from "@/integrations/supabase/types"
 import { generateFichaFn } from "@/lib/ficha-actions";
 import {
   approveEvaluationByAgentsFn,
-  generateParecerFn,
   reopenEvaluationFn,
   updateCriterionScoreFn,
 } from "@/lib/agent-actions";
@@ -75,7 +74,6 @@ export function useCreateProponent() {
     },
   });
 }
-
 
 export function useDeleteProponent() {
   const queryClient = useQueryClient();
@@ -154,22 +152,6 @@ export function useReopenEvaluation(proponentId: string) {
       queryClient.invalidateQueries({ queryKey: ["criterion_scores", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents", proponentId] });
       queryClient.invalidateQueries({ queryKey: ["proponents"] });
-    },
-  });
-}
-
-// Regeneração manual da minuta (agente 8) — útil se a geração automática ao
-// aprovar falhar, ou se a avaliadora quiser uma nova versão depois de reabrir
-// e ajustar notas sem passar de novo por "Executar agentes".
-export function useGenerateParecer(proponentId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      return generateParecerFn({ data: { proponentId } });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pareceres", proponentId] });
-      queryClient.invalidateQueries({ queryKey: ["flags", proponentId] });
     },
   });
 }

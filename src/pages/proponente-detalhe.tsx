@@ -28,7 +28,6 @@ import {
   useCriterionScores,
   useFiles,
   useGenerateFicha,
-  useGenerateParecer,
   useProponent,
   useUpdateCriterionScore,
   useUpdateProponentTipo,
@@ -45,6 +44,7 @@ import {
   useRunAgentPipeline,
   type EvidenceRow,
 } from "@/lib/queries/agents";
+import { useApplicationJob, useRetryStage } from "@/lib/queries/jobs";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
@@ -196,14 +196,6 @@ export function ProponentDetail({ id }: { id: string }) {
             </p>
           )}
 
-          {approveEvaluation.isSuccess && approveEvaluation.data.parecerError && (
-            <p className="text-xs text-warning-foreground">
-              Avaliação aprovada, mas a minuta de parecer não pôde ser gerada automaticamente (
-              {approveEvaluation.data.parecerError}). Reexecute a geração pelo Agente 8 na aba
-              "Minuta de parecer".
-            </p>
-          )}
-
           {approveEvaluation.isError && (
             <p className="text-xs text-destructive">
               {(approveEvaluation.error as Error | undefined)?.message ??
@@ -261,6 +253,7 @@ export function ProponentDetail({ id }: { id: string }) {
         <TabsContent value="parecer">
           <ParecerTab
             proponentId={id}
+            editalId={editalId}
             hasPending={hasPending}
             exportReady={p.evaluations?.export_ready ?? false}
             tipoProponente={p.tipo_proponente ?? null}
@@ -716,18 +709,21 @@ function EvidenceTable({ proponentId }: { proponentId: string }) {
 
 function ParecerTab({
   proponentId,
+  editalId,
   hasPending,
   exportReady,
   tipoProponente,
 }: {
   proponentId: string;
+  editalId: string | undefined;
   hasPending: boolean;
   exportReady: boolean;
   tipoProponente: TipoProponente | null;
 }) {
   const { data: parecer, isLoading } = useLatestParecer(proponentId);
   const generateFicha = useGenerateFicha(proponentId);
-  const generateParecer = useGenerateParecer(proponentId);
+  const { data: job } = useApplicationJob(editalId, proponentId);
+  const retryParecer = useRetryStage(editalId);
 
   const podeGerarFicha = exportReady && !!tipoProponente && !!parecer;
   const motivoBloqueioFicha = !parecer
@@ -738,6 +734,14 @@ function ParecerTab({
         ? 'defina o "tipo de proponente" na aba Dossiê'
         : null;
 
+  // A minuta é gerada pela mesma etapa "parecer" do pipeline de
+  // Processamento (Railway) -- "gerar de novo" aqui só reenvia essa etapa
+  // pra fila, não gera texto na hora. O resultado atualizado aparece nesta
+  // aba quando a etapa terminar (acompanhável em Processamento).
+  const motivoBloqueioMinuta = !job
+    ? "nenhum processamento encontrado pra este proponente -- rode o processamento primeiro"
+    : undefined;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -746,16 +750,12 @@ function ParecerTab({
           <Button
             size="sm"
             variant="outline"
-            disabled={!exportReady || generateParecer.isPending}
-            onClick={() => generateParecer.mutate()}
-            title={!exportReady ? "aprove a avaliação sem pendências abertas" : undefined}
+            disabled={!job || retryParecer.isPending}
+            onClick={() => job && retryParecer.mutate({ jobId: job.id, stage: "parecer" })}
+            title={motivoBloqueioMinuta}
           >
             <Sparkles className="w-4 h-4 mr-1.5" />
-            {generateParecer.isPending
-              ? "Gerando minuta…"
-              : parecer
-                ? "Gerar nova minuta"
-                : "Gerar minuta"}
+            {retryParecer.isPending ? "Enviando…" : parecer ? "Gerar nova minuta" : "Gerar minuta"}
           </Button>
           {parecer && (
             <Button
@@ -799,15 +799,21 @@ function ParecerTab({
           </>
         ) : (
           <div className="text-sm text-muted-foreground">
-            {exportReady
+            {job
               ? 'Nenhuma minuta ainda — clique em "Gerar minuta" acima.'
-              : 'A minuta é gerada automaticamente ao clicar em "Aprovar avaliação" (aba Avaliação), com as notas finais já definidas.'}
+              : 'A minuta é gerada pela etapa "parecer" do processamento (aba Processamento).'}
           </div>
         )}
-        {generateParecer.isError && (
+        {retryParecer.isSuccess && (
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Reprocessamento da minuta enviado — acompanhe o progresso na aba Processamento; a versão
+            atualizada aparece aqui quando terminar.
+          </p>
+        )}
+        {retryParecer.isError && (
           <p className="text-xs text-destructive mt-2">
-            {(generateParecer.error as Error | undefined)?.message ??
-              "Falha ao gerar a minuta de parecer."}
+            {(retryParecer.error as Error | undefined)?.message ??
+              "Falha ao reenviar a etapa de geração da minuta."}
           </p>
         )}
       </CardContent>
