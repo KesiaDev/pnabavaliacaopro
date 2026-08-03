@@ -18,7 +18,10 @@ export const STATUS_LABEL: Record<ProponentStatus, string> = {
   inventariado: "Inventariado",
   em_analise: "Em análise",
   avaliacao_proposta: "Avaliação proposta",
-  auditoria_concluida: "Auditoria concluída",
+  // Rótulo aplicado quando o pipeline do Railway termina as 12 etapas (ver
+  // internal-jobs.server.ts) -- reaproveita o valor "auditoria_concluida" do
+  // enum em vez de criar um novo, já que nada mais usava esse status.
+  auditoria_concluida: "Aguardando aprovação",
   pendencia_humana: "Pendência humana",
   aprovado_pela_avaliadora: "Aprovado pela avaliadora",
   bloqueado: "Bloqueado",

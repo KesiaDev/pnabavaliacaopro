@@ -8,6 +8,15 @@ import { z } from "zod";
 import { PROCESSING_STAGES } from "@/lib/api/types";
 import { verifyInternalRequest, jsonResponse } from "@/lib/internal-auth.server";
 
+// Status que representam uma decisão já tomada por uma pessoa (ou pela
+// administração) -- o fim automático do pipeline nunca deve sobrescrever
+// nenhum destes.
+const LOCKED_PROPONENT_STATUSES = [
+  "aprovado_pela_avaliadora",
+  "bloqueado",
+  "pendencia_administrativa",
+];
+
 const createJobBodySchema = z.object({
   editalId: z.string().uuid(),
   applicationId: z.string().uuid(),
@@ -186,6 +195,36 @@ export async function handleUpdateStageRequest(
     .eq("id", jobId);
   if (jobUpdateError) {
     return jsonResponse({ code: "job_update_failed", message: jobUpdateError.message }, 500);
+  }
+
+  // Pipeline terminou as 12 etapas: sinaliza pra avaliadora que o dossiê
+  // saiu de "Importado" e está pronto pra revisão, sem mexer em status que
+  // já refletem uma decisão humana/administrativa (aprovado, bloqueado,
+  // pendência administrativa) -- best-effort, nunca derruba a resposta já
+  // bem-sucedida do job/etapa se isso falhar.
+  if (status === "concluido") {
+    try {
+      const { data: job } = await supabaseAdmin
+        .from("processing_jobs")
+        .select("proponent_id")
+        .eq("id", jobId)
+        .maybeSingle();
+      if (job?.proponent_id) {
+        const { data: proponent } = await supabaseAdmin
+          .from("proponents")
+          .select("status")
+          .eq("id", job.proponent_id)
+          .maybeSingle();
+        if (proponent && !LOCKED_PROPONENT_STATUSES.includes(proponent.status)) {
+          await supabaseAdmin
+            .from("proponents")
+            .update({ status: "auditoria_concluida" })
+            .eq("id", job.proponent_id);
+        }
+      }
+    } catch (err) {
+      console.warn("advance_proponent_status_failed", err);
+    }
   }
 
   return jsonResponse({ ok: true, jobStatus: status }, 200);
