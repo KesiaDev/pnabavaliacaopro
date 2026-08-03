@@ -9,6 +9,21 @@
 -- Sem esses dados, o critério J (PNAB Ciclo 1) sempre resultava "sem
 -- correspondência -- lista ainda não importada", nunca podendo ser
 -- considerado definitivo.
+--
+-- Restrição de unicidade + ON CONFLICT DO NOTHING: essa migration pode
+-- acabar rodando mais de uma vez (aplicada manualmente via SQL Editor e
+-- depois novamente pelo controle de versão do Lovable, ou reaplicada por
+-- engano) -- sem isso, rodar duas vezes duplicaria as 51 linhas.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'cycle1_awardees_nome_origem_unique'
+  ) then
+    alter table public.cycle1_awardees
+      add constraint cycle1_awardees_nome_origem_unique unique (nome, origem_edital);
+  end if;
+end $$;
+
 insert into public.cycle1_awardees (nome, tipo, origem_edital) values
   ('Agostinho Basso', 'nome_civil', '231/2024'),
   ('Ezequiel Zanoni Duarte', 'nome_civil', '231/2024'),
@@ -60,4 +75,5 @@ insert into public.cycle1_awardees (nome, tipo, origem_edital) values
   ('VIELAS Espaço cultural', 'espaco', '231/2024'),
   ('Instituto Hércules Gallé', 'espaco', '231/2024'),
   ('Ponto de Cultura Casa das Etnias', 'espaco', '231/2024'),
-  ('Studio de Danças Camila Oliveira', 'espaco', '231/2024');
+  ('Studio de Danças Camila Oliveira', 'espaco', '231/2024')
+on conflict (nome, origem_edital) do nothing;
