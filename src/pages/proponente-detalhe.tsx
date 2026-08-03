@@ -41,10 +41,10 @@ import {
   useEvidence,
   useFlags,
   useLatestParecer,
-  useRunAgentPipeline,
   type EvidenceRow,
 } from "@/lib/queries/agents";
 import { useApplicationJob, useRetryStage } from "@/lib/queries/jobs";
+import { useRealtimeInvalidation } from "@/lib/realtime/use-realtime";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
@@ -75,8 +75,24 @@ export function ProponentDetail({ id }: { id: string }) {
   }, [criteria]);
   const updateScore = useUpdateCriterionScore(id);
   const approveEvaluation = useApproveEvaluation(id);
-  const runAgents = useRunAgentPipeline(id);
   const reopenEvaluation = useReopenEvaluation(id);
+
+  // Sem isso, notas/parecer/flags escritos pelo processamento em segundo
+  // plano (Railway) só apareciam nesta página depois de um F5 -- ao
+  // contrário da tela de Processamento, que já tinha essa assinatura.
+  useRealtimeInvalidation({
+    tables: ["criterion_scores", "evaluations", "flags", "pareceres"],
+    queryKeys: useMemo(
+      () => [
+        ["criterion_scores", id],
+        ["proponents", id],
+        ["proponents"],
+        ["flags", id],
+        ["pareceres", id, "latest"],
+      ],
+      [id],
+    ),
+  });
 
   const rows = useMemo(() => scores ?? [], [scores]);
   const totalProposto = useMemo(
@@ -163,15 +179,6 @@ export function ProponentDetail({ id }: { id: string }) {
                 <div className="flex flex-col gap-2 mt-3">
                   <Button
                     size="sm"
-                    variant="secondary"
-                    disabled={runAgents.isPending}
-                    onClick={() => runAgents.mutate()}
-                  >
-                    <Bot className="w-4 h-4 mr-1.5" />
-                    {runAgents.isPending ? "Executando agentes…" : "Executar agentes"}
-                  </Button>
-                  <Button
-                    size="sm"
                     disabled={hasPending || approveEvaluation.isPending}
                     onClick={() => approveEvaluation.mutate()}
                   >
@@ -189,12 +196,6 @@ export function ProponentDetail({ id }: { id: string }) {
               </CardContent>
             </Card>
           </div>
-
-          {runAgents.isError && (
-            <p className="text-xs text-destructive">
-              {(runAgents.error as Error | undefined)?.message ?? "Falha ao executar os agentes."}
-            </p>
-          )}
 
           {approveEvaluation.isError && (
             <p className="text-xs text-destructive">

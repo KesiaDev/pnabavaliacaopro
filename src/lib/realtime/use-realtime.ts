@@ -9,7 +9,8 @@ type TableName =
   | "criterion_scores"
   | "sync_runs"
   | "cost_entries"
-  | "flags";
+  | "flags"
+  | "pareceres";
 
 /**
  * Escuta mudanças em tempo real e invalida o cache correspondente.
@@ -25,13 +26,7 @@ export function useRealtimeInvalidation(options: {
   active?: boolean;
   enabled?: boolean;
 }) {
-  const {
-    tables,
-    queryKeys,
-    pollIntervalMs = 5000,
-    active = true,
-    enabled = true,
-  } = options;
+  const { tables, queryKeys, pollIntervalMs = 5000, active = true, enabled = true } = options;
   const queryClient = useQueryClient();
   const connectedRef = useRef(false);
   const keysRef = useRef(queryKeys);
@@ -45,7 +40,9 @@ export function useRealtimeInvalidation(options: {
 
   useEffect(() => {
     if (!enabled) return;
-    const channel = supabase.channel(`realtime-${tables.join("-")}-${Math.random().toString(36).slice(2)}`);
+    const channel = supabase.channel(
+      `realtime-${tables.join("-")}-${Math.random().toString(36).slice(2)}`,
+    );
 
     for (const table of tables) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {
