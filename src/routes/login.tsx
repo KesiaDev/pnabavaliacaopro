@@ -50,10 +50,14 @@ function LoginPage() {
 
     setLoading(false);
     if (resetError) {
-      setError("Não foi possível enviar o e-mail de redefinição. Verifique o endereço e tente novamente.");
+      setError(
+        "Não foi possível enviar o e-mail de redefinição. Verifique o endereço e tente novamente.",
+      );
       return;
     }
-    setInfo("Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha. Verifique sua caixa de entrada.");
+    setInfo(
+      "Se o e-mail estiver cadastrado, enviamos um link para redefinir a senha. Verifique sua caixa de entrada.",
+    );
   }
 
   const isForgot = mode === "forgot";
@@ -71,7 +75,7 @@ function LoginPage() {
           <p className="text-xs text-muted-foreground">
             {isForgot
               ? "Informe seu e-mail para receber o link de redefinição."
-              : "Edital 119/2026 · Ciclo 2 · Acesso restrito"}
+              : "PNAB · Ciclo 2 · Acesso restrito"}
           </p>
         </CardHeader>
         <CardContent>

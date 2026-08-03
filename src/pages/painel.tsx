@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { STATUS_LABEL, STATUS_TONE, mockChanges } from "@/lib/mock-data";
 import { useProponents } from "@/lib/queries/proponents";
+import { useEdital } from "@/lib/queries/editais";
 import {
   AlertTriangle,
   ArrowRight,
@@ -15,11 +16,11 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
-
 export function Dashboard() {
   const { editalId } = useEditalContext();
   const base = `/editais/${editalId}`;
   const { data: proponents, isLoading } = useProponents();
+  const { data: edital } = useEdital(editalId);
   const list = proponents ?? [];
 
   const total = list.length;
@@ -46,7 +47,11 @@ export function Dashboard() {
       ) : (
         <>
           <div className="grid grid-cols-4 gap-4 mb-8">
-            <StatCard label="Proponentes atribuídos" value={String(total)} hint="Edital 119/2026" />
+            <StatCard
+              label="Proponentes atribuídos"
+              value={String(total)}
+              hint={edital ? `Edital ${edital.number}/${edital.year}` : "—"}
+            />
             <StatCard
               label="Aprovados pela avaliadora"
               value={`${aprovados}/${total || 0}`}
@@ -118,7 +123,9 @@ export function Dashboard() {
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
-                          <span className="text-[10px] text-muted-foreground">/110</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            /{edital?.max_individual_score ?? "—"}
+                          </span>
                         </div>
                       </Link>
                     ))}

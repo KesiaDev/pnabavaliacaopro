@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEditalContext } from "@/contexts/edital-context";
-import { useEditalCriteria } from "@/lib/queries/editais";
+import { useEdital, useEditalCriteria } from "@/lib/queries/editais";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,8 @@ export function ProponentDetail({ id }: { id: string }) {
   // do Edital 120/2026, diferente do 119). O código da letra (ex: "Critério
   // A") é o fallback enquanto isso ainda não carregou.
   const { data: criteria } = useEditalCriteria(editalId);
+  const { data: edital } = useEdital(editalId);
+  const maxIndividualScore = edital?.max_individual_score ?? 110;
   const criterionLabel = useMemo(() => {
     const map = new Map((criteria ?? []).map((c) => [c.code, c.title]));
     return (code: string) => map.get(code) ?? `Critério ${code}`;
@@ -163,11 +165,13 @@ export function ProponentDetail({ id }: { id: string }) {
             <ScoreOverview
               label="Nota proposta pelos agentes"
               value={totalProposto}
+              max={maxIndividualScore}
               tone="warning"
             />
             <ScoreOverview
               label={hasPending ? "Prévia provisória" : "Nota final dos agentes"}
               value={p.evaluations?.individual_total ?? 0}
+              max={maxIndividualScore}
               tone={hasPending ? "warning" : "success"}
               pending={hasPending}
             />
@@ -308,11 +312,13 @@ export function ProponentDetail({ id }: { id: string }) {
 function ScoreOverview({
   label,
   value,
+  max,
   tone,
   pending,
 }: {
   label: string;
   value: number;
+  max: number;
   tone: "warning" | "success";
   pending?: boolean;
 }) {
@@ -325,14 +331,14 @@ function ScoreOverview({
         </div>
         <div className="flex items-baseline gap-1 mt-2">
           <span className={`font-serif text-4xl ${cls}`}>{value}</span>
-          <span className="text-sm text-muted-foreground">/ 110</span>
+          <span className="text-sm text-muted-foreground">/ {max}</span>
           {pending && (
             <span className="ml-2 text-[10px] uppercase tracking-wider text-warning-foreground">
               prévia
             </span>
           )}
         </div>
-        <Progress value={(value / 110) * 100} className="h-1 mt-3" />
+        <Progress value={(value / max) * 100} className="h-1 mt-3" />
       </CardContent>
     </Card>
   );

@@ -34,13 +34,14 @@ import {
 } from "@/components/ui/select";
 import { STATUS_LABEL, STATUS_TONE, type ProponentStatus } from "@/lib/mock-data";
 import { useCreateProponent, useDeleteProponent, useProponents } from "@/lib/queries/proponents";
+import { useEdital } from "@/lib/queries/editais";
 import { Search, ShieldAlert, Trash2 } from "lucide-react";
-
 
 export function ProponentesList() {
   const { editalId } = useEditalContext();
   const base = `/editais/${editalId}`;
   const { data: proponents, isLoading } = useProponents();
+  const { data: edital } = useEdital(editalId);
   const list = proponents ?? [];
   const [filter, setFilter] = useState("");
 
@@ -138,7 +139,9 @@ export function ProponentesList() {
                         }
                       >
                         {p.evaluations.individual_total}
-                        <span className="text-[10px] text-muted-foreground">/110</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          /{edital?.max_individual_score ?? "—"}
+                        </span>
                       </span>
                     ) : (
                       "—"
