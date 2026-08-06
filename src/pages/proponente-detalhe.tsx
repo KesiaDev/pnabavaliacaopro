@@ -102,6 +102,11 @@ export function ProponentDetail({ id }: { id: string }) {
     [rows],
   );
   const hasPending = rows.some((c) => c.human_review_required);
+  // Avaliação aprovada é imutável por desenho (ADR-5) -- editar uma nota
+  // direto por aqui sem passar por "Reabrir análise" deixava
+  // evaluations.individual_total e a minuta já publicada dessincronizados
+  // da última edição, sem nenhum sinal visível disso pra avaliadora.
+  const isLocked = p?.status === "aprovado_pela_avaliadora";
 
   if (isLoading) {
     return (
@@ -215,6 +220,7 @@ export function ProponentDetail({ id }: { id: string }) {
                 data={c}
                 label={criterionLabel(c.criterion)}
                 saving={updateScore.isPending}
+                locked={isLocked}
                 onSave={(patch) => updateScore.mutate({ id: c.id, ...patch })}
               />
             ))}
@@ -349,6 +355,7 @@ function CriterionRow({
   label,
   onSave,
   saving,
+  locked,
 }: {
   data: CriterionScoreRow;
   label: string;
@@ -358,6 +365,7 @@ function CriterionRow({
     justification?: string;
   }) => void;
   saving: boolean;
+  locked: boolean;
 }) {
   const [approved, setApproved] = useState<number | "">(data.approved_score ?? "");
   const [pending, setPending] = useState(data.human_review_required);
@@ -400,14 +408,20 @@ function CriterionRow({
             <div className="flex items-center gap-3 mt-2">
               <button
                 type="button"
+                disabled={locked}
                 onClick={() => {
                   if (editingText) setJustification(data.justification ?? "");
                   setEditingText((v) => !v);
                 }}
-                className="text-[11px] px-2 py-1 rounded border border-border text-muted-foreground hover:bg-secondary transition-colors"
+                className="text-[11px] px-2 py-1 rounded border border-border text-muted-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:hover:bg-transparent"
               >
                 {editingText ? "cancelar edição do texto" : "editar avaliação"}
               </button>
+              {locked && (
+                <span className="text-[11px] text-muted-foreground">
+                  Avaliação aprovada — clique em "Reabrir análise" pra editar notas.
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-3">
               <label className="text-xs text-muted-foreground">Nota dos agentes</label>
@@ -421,6 +435,7 @@ function CriterionRow({
                 min={0}
                 max={data.max_score}
                 value={approved}
+                disabled={locked}
                 onChange={(e) => {
                   const value = e.target.value === "" ? "" : Number(e.target.value);
                   setApproved(value);
@@ -433,8 +448,9 @@ function CriterionRow({
               />
               <button
                 type="button"
+                disabled={locked}
                 onClick={() => setPending((v) => !v)}
-                className={`text-[11px] px-2 py-1 rounded border transition-colors ${
+                className={`text-[11px] px-2 py-1 rounded border transition-colors disabled:opacity-50 disabled:hover:bg-transparent ${
                   pending
                     ? "border-warning/50 bg-warning/15 text-warning-foreground"
                     : "border-border text-muted-foreground hover:bg-secondary"
@@ -446,7 +462,7 @@ function CriterionRow({
                 size="sm"
                 variant="outline"
                 className="ml-auto"
-                disabled={!dirty || saving}
+                disabled={locked || !dirty || saving}
                 onClick={() => {
                   onSave({
                     approved_score: approved === "" ? null : approved,
