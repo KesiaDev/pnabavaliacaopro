@@ -1694,6 +1694,7 @@ export type Database = {
         }
         Returns: {
           file_id: string
+          file_nome: string
           id: string
           pagina_final: number
           pagina_inicial: number

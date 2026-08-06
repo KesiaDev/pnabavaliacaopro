@@ -228,7 +228,7 @@ export async function handleBackfillProponentsEdital(request: Request): Promise<
 
 const finishSyncRunBodySchema = z.object({
   status: z.enum(["concluido", "erro"]),
-  stats: z.record(z.number()).nullable().optional(),
+  stats: z.record(z.string(), z.number()).nullable().optional(),
   errorMessage: z.string().nullable().optional(),
 });
 
